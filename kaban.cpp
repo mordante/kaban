@@ -116,7 +116,7 @@ void print(std::string_view title, const std::vector<task> &tasks) {
   std::cout << '\n';
 }
 
-int main() {
+int main(int argc, const char *argv[]) {
   char *home = std::getenv("HOME");
   std::ifstream file{home + std::string{"/kaban"}};
   parse(file);
@@ -140,5 +140,6 @@ int main() {
   print("REVIEW", review);
   print("PROGRESS", progress);
   print("BACKLOG", backlog);
-  print("BLOCKED", blocked);
+  if (argc == 2 && strcmp(argv[1], "-b") == 0)
+    print("BLOCKED", blocked);
 }
