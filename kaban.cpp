@@ -124,13 +124,16 @@ void parse(std::ifstream &file) {
 }
 
 bool is_blocked(const task &task) {
-  if (task.blocked_by_tasks.empty())
-    return false;
+  for (auto id : task.blocked_by_tasks) {
+    auto it = std::find_if(tasks.begin(), tasks.end(),
+                           [id](const auto &task) { return task.id == id; });
+    if (it == tasks.end())
+      throw 42;
 
-  auto it =
-      std::find_if(tasks.begin(), tasks.end(),
-                   [id = task.id](const auto &task) { return task.id == id; });
-  return it != tasks.end();
+    if (it->status != "done" && it->status != "discarded")
+      return true;
+  }
+  return false;
 }
 
 bool is_active(const task &task) {
