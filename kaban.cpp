@@ -15,6 +15,8 @@ struct task {
   std::vector<std::size_t> blocked_by_tasks;
 };
 
+std::vector<task> tasks;
+
 std::size_t parse_id(std::string_view input) {
   std::size_t result;
   std::from_chars_result status =
@@ -51,10 +53,8 @@ std::vector<std::size_t> parse_id_list(std::string_view input) {
   }
 }
 
-std::vector<task> parse(std::ifstream &file) {
+void parse(std::ifstream &file) {
   bool parse = false;
-
-  std::vector<task> tasks;
 
   std::string line;
   while (std::getline(file, line)) {
@@ -79,10 +79,9 @@ std::vector<task> parse(std::ifstream &file) {
       tasks.emplace_back();
     }
   }
-  return tasks;
 }
 
-bool is_blocked(const std::vector<task> &tasks, const task &task) {
+bool is_blocked(const task &task) {
   if (task.blocked_by_tasks.empty())
     return false;
 
@@ -90,6 +89,16 @@ bool is_blocked(const std::vector<task> &tasks, const task &task) {
       std::find_if(tasks.begin(), tasks.end(),
                    [id = task.id](const auto &task) { return task.id == id; });
   return it != tasks.end();
+}
+
+std::string_view get_title(std::size_t id) {
+  auto it = std::find_if(tasks.begin(), tasks.end(),
+                         [id](const auto &task) { return task.id == id; });
+
+  if (it == tasks.end())
+    throw 42;
+
+  return it->title;
 }
 
 void print(std::string_view title, const std::vector<task> &tasks) {
@@ -102,7 +111,7 @@ void print(std::string_view title, const std::vector<task> &tasks) {
 
     if (!task.blocked_by_tasks.empty())
       for (auto id : task.blocked_by_tasks)
-        std::cout << std::format("      x {:3}\n", id);
+        std::cout << std::format("      x {:3} {}\n", id, get_title(id));
   }
   std::cout << '\n';
 }
@@ -110,7 +119,7 @@ void print(std::string_view title, const std::vector<task> &tasks) {
 int main() {
   char *home = std::getenv("HOME");
   std::ifstream file{home + std::string{"/kaban"}};
-  std::vector<task> tasks = parse(file);
+  parse(file);
   std::cout << "Found " << tasks.size() << " tasks\n";
 
   std::vector<task> blocked;
@@ -119,7 +128,7 @@ int main() {
   std::vector<task> review;
   for (const auto &task : tasks) {
     if (task.status == "backlog") {
-      if (is_blocked(tasks, task))
+      if (is_blocked(task))
         blocked.push_back(task);
       else
         backlog.push_back(task);
