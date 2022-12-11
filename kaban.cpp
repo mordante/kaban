@@ -8,13 +8,23 @@
 #include <string_view>
 #include <vector>
 
+struct project {
+  std::size_t id;
+  std::string name;
+  std::string description;
+  bool active{true};
+};
+
 struct task {
   std::size_t id;
   std::string title;
+  std::string description;
   std::string status;
+  size_t project{0};
   std::vector<std::size_t> blocked_by_tasks;
 };
 
+std::vector<project> projects;
 std::vector<task> tasks;
 
 std::size_t parse_id(std::string_view input) {
@@ -53,29 +63,61 @@ std::vector<std::size_t> parse_id_list(std::string_view input) {
   }
 }
 
+bool parse_bool(std::string_view input) {
+  if (input == "true")
+    return true;
+
+  if (input == "false")
+    return false;
+
+  throw 42;
+}
+
 void parse(std::ifstream &file) {
-  bool parse = false;
+  enum class parsing { none, task, project };
+  parsing current = parsing::none;
 
   std::string line;
   while (std::getline(file, line)) {
-    if (parse) {
+    if (current != parsing::none) {
       if (line == "") {
-        parse = false;
+        current = parsing::none;
         continue;
       }
 
       int pos = line.find('=');
-      if (line.substr(0, pos) == "id")
-        tasks.back().id = parse_id(line.substr(pos + 1));
-      if (line.substr(0, pos) == "title")
-        tasks.back().title = line.substr(pos + 1);
-      if (line.substr(0, pos) == "status")
-        tasks.back().status = line.substr(pos + 1);
-      if (line.substr(0, pos) == "blocked_by_tasks")
-        tasks.back().blocked_by_tasks = parse_id_list(line.substr(pos + 1));
+      if (current == parsing::project) {
+        if (line.substr(0, pos) == "id")
+          projects.back().id = parse_id(line.substr(pos + 1));
+        else if (line.substr(0, pos) == "name")
+          projects.back().name = line.substr(pos + 1);
+        else if (line.substr(0, pos) == "description")
+          projects.back().description = line.substr(pos + 1);
+        else if (line.substr(0, pos) == "active")
+          projects.back().active = parse_bool(line.substr(pos + 1));
+        else
+          throw 42;
+      } else if (current == parsing::task) {
+        if (line.substr(0, pos) == "id")
+          tasks.back().id = parse_id(line.substr(pos + 1));
+        else if (line.substr(0, pos) == "project")
+          tasks.back().project = parse_id(line.substr(pos + 1));
+        else if (line.substr(0, pos) == "title")
+          tasks.back().title = line.substr(pos + 1);
+        else if (line.substr(0, pos) == "description")
+          tasks.back().description = line.substr(pos + 1);
+        else if (line.substr(0, pos) == "status")
+          tasks.back().status = line.substr(pos + 1);
+        else if (line.substr(0, pos) == "blocked_by_tasks")
+          tasks.back().blocked_by_tasks = parse_id_list(line.substr(pos + 1));
+      } else
+        throw 42;
 
+    } else if (line == "[project]") {
+      current = parsing::project;
+      projects.emplace_back();
     } else if (line == "[task]") {
-      parse = true;
+      current = parsing::task;
       tasks.emplace_back();
     }
   }
@@ -91,6 +133,19 @@ bool is_blocked(const task &task) {
   return it != tasks.end();
 }
 
+bool is_active(const task &task) {
+  if (task.project == 0)
+    return true;
+
+  auto it = std::find_if(
+      projects.begin(), projects.end(),
+      [id = task.project](const auto &project) { return project.id == id; });
+  if (it == projects.end())
+    throw 42;
+
+  return it->active;
+}
+
 std::string_view get_title(std::size_t id) {
   auto it = std::find_if(tasks.begin(), tasks.end(),
                          [id](const auto &task) { return task.id == id; });
@@ -101,13 +156,30 @@ std::string_view get_title(std::size_t id) {
   return it->title;
 }
 
+std::string_view get_project_name(std::size_t id) {
+  auto it = std::find_if(projects.begin(), projects.end(),
+                         [id](const auto &task) { return task.id == id; });
+
+  if (it == projects.end())
+    throw 42;
+
+  return it->name;
+}
+
 void print(std::string_view title, const std::vector<task> &tasks) {
   if (tasks.empty())
     return;
 
   std::cout << std::format("[{}]\n", title);
   for (const auto &task : tasks) {
-    std::cout << std::format("- {:3} {}\n", task.id, task.title);
+    if (task.project)
+      std::cout << std::format("- {:3} [{}] {}\n", task.id,
+                               get_project_name(task.project), task.title);
+    else
+      std::cout << std::format("- {:3} {}\n", task.id, task.title);
+
+    if (!task.description.empty())
+      std::cout << std::format("      - {}\n", task.description);
 
     if (!task.blocked_by_tasks.empty())
       for (auto id : task.blocked_by_tasks)
@@ -122,6 +194,7 @@ int main(int argc, const char *argv[]) {
   parse(file);
   std::cout << "Found " << tasks.size() << " tasks\n";
 
+  std::vector<task> inactive;
   std::vector<task> blocked;
   std::vector<task> backlog;
   std::vector<task> progress;
@@ -130,6 +203,8 @@ int main(int argc, const char *argv[]) {
     if (task.status == "backlog") {
       if (is_blocked(task))
         blocked.push_back(task);
+      else if (!is_active(task))
+        inactive.push_back(task);
       else
         backlog.push_back(task);
     } else if (task.status == "progress")
@@ -140,6 +215,8 @@ int main(int argc, const char *argv[]) {
   print("REVIEW", review);
   print("PROGRESS", progress);
   print("BACKLOG", backlog);
-  if (argc == 2 && strcmp(argv[1], "-b") == 0)
+  if (argc == 2 && strcmp(argv[1], "-b") == 0) {
     print("BLOCKED", blocked);
+    print("INACTIVE", inactive);
+  }
 }
