@@ -16,10 +16,20 @@ struct project {
 };
 
 struct task {
+
+  enum class tstatus {
+    backlog,
+    selected, /**< Selected for development. */
+    progress, /**< In progress. */
+    review,   /**< In review. */
+    done,     /**< Completed the work. */
+    discarded /**< The task has been discarded. */
+  };
+
   std::size_t id;
   std::string title;
   std::string description;
-  std::string status;
+  tstatus status{tstatus::backlog};
   size_t project{0};
   std::vector<std::size_t> blocked_by_tasks;
 };
@@ -61,6 +71,23 @@ std::vector<std::size_t> parse_id_list(std::string_view input) {
     if (*begin++ != ',' || *begin++ != ' ')
       throw 42;
   }
+}
+
+task::tstatus parse_status(std::string_view input) {
+  if (input == "backlog")
+    return task::tstatus::backlog;
+  if (input == "selected")
+    return task::tstatus::selected;
+  if (input == "progress")
+    return task::tstatus::progress;
+  if (input == "review")
+    return task::tstatus::review;
+  if (input == "done")
+    return task::tstatus::done;
+  if (input == "discarded")
+    return task::tstatus::discarded;
+
+  throw 42;
 }
 
 bool parse_bool(std::string_view input) {
@@ -107,7 +134,7 @@ void parse(std::ifstream &file) {
         else if (line.substr(0, pos) == "description")
           tasks.back().description = line.substr(pos + 1);
         else if (line.substr(0, pos) == "status")
-          tasks.back().status = line.substr(pos + 1);
+          tasks.back().status = parse_status(line.substr(pos + 1));
         else if (line.substr(0, pos) == "blocked_by_tasks")
           tasks.back().blocked_by_tasks = parse_id_list(line.substr(pos + 1));
       } else
@@ -123,6 +150,10 @@ void parse(std::ifstream &file) {
   }
 }
 
+bool is_complete(task::tstatus status) {
+  return status == task::tstatus::done || status == task::tstatus::discarded;
+}
+
 bool is_blocked(const task &task) {
   for (auto id : task.blocked_by_tasks) {
     auto it = std::find_if(tasks.begin(), tasks.end(),
@@ -130,7 +161,7 @@ bool is_blocked(const task &task) {
     if (it == tasks.end())
       throw 42;
 
-    if (it->status != "done" && it->status != "discarded")
+    if (!is_complete(it->status))
       return true;
   }
   return false;
@@ -203,16 +234,16 @@ int main(int argc, const char *argv[]) {
   std::vector<task> progress;
   std::vector<task> review;
   for (const auto &task : tasks) {
-    if (task.status == "backlog") {
+    if (task.status == task::tstatus::backlog) {
       if (is_blocked(task))
         blocked.push_back(task);
       else if (!is_active(task))
         inactive.push_back(task);
       else
         backlog.push_back(task);
-    } else if (task.status == "progress")
+    } else if (task.status == task::tstatus::progress)
       progress.push_back(task);
-    else if (task.status == "review")
+    else if (task.status == task::tstatus::review)
       review.push_back(task);
   }
   print("REVIEW", review);
