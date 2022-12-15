@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <chrono>
 #include <cstdlib>
 #include <format>
 #include <fstream>
@@ -15,6 +16,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <sstream> // multiline
 
 std::size_t parse_id(std::string_view input) {
   std::size_t result;
@@ -60,6 +63,27 @@ bool parse_bool(std::string_view input) {
     return false;
 
   throw 42;
+}
+
+std::chrono::year_month_day parse_date(std::string_view input) {
+  std::size_t end = input.find('.');
+  if (end == std::string::npos)
+    throw 42;
+
+  std::chrono::year year{static_cast<int>(parse_id(input.substr(0, end)))};
+  input = input.substr(end + 1);
+
+  end = input.find('.');
+  if (end == std::string::npos)
+    throw 42;
+
+  std::chrono::month month{
+      static_cast<unsigned>(parse_id(input.substr(0, end)))};
+  input = input.substr(end + 1);
+
+  std::chrono::day day{static_cast<unsigned>(parse_id(input))};
+
+  return {year, month, day};
 }
 
 template <class F> struct delay {
@@ -215,7 +239,9 @@ struct task {
   tstatus status{tstatus::backlog};
   size_t project{0};
   size_t group{0};
-  std::vector<std::size_t> blocked_by_tasks;
+  std::vector<std::size_t> dependencies;
+  std::vector<std::size_t> requirements;
+  std::optional<std::chrono::year_month_day> after;
 
 private:
   void parse(parser &parser);
@@ -361,8 +387,12 @@ void task::parse(parser &parser) {
         description = line.second[1];
       else if (line.second[0] == "status")
         status = parse_status(line.second[1]);
-      else if (line.second[0] == "blocked_by_tasks")
-        blocked_by_tasks = parse_id_list(line.second[1]);
+      else if (line.second[0] == "dependencies")
+        dependencies = parse_id_list(line.second[1]);
+      else if (line.second[0] == "requirements")
+        requirements = parse_id_list(line.second[1]);
+      else if (line.second[0] == "after")
+        after = parse_date(line.second[1]);
       else
         throw 42;
     }
@@ -403,7 +433,7 @@ bool is_complete(task::tstatus status) {
 }
 
 bool is_blocked(const task &task) {
-  for (auto id : task.blocked_by_tasks) {
+  for (auto id : task.dependencies) {
     auto it = std::find_if(tasks.begin(), tasks.end(),
                            [id](const auto &task) { return task.id == id; });
     if (it == tasks.end())
@@ -412,6 +442,10 @@ bool is_blocked(const task &task) {
     if (!is_complete(it->status))
       return true;
   }
+  // TODO Validate requirements
+  if (task.after)
+    return static_cast<std::chrono::sys_days>(*task.after) <=
+           std::chrono::system_clock::now();
   return false;
 }
 
@@ -439,10 +473,21 @@ std::string_view get_title(std::size_t id) {
 }
 
 std::string_view get_project_name(std::size_t id) {
-  auto it = std::find_if(projects.begin(), projects.end(),
-                         [id](const auto &task) { return task.id == id; });
+  auto it =
+      std::find_if(projects.begin(), projects.end(),
+                   [id](const auto &project) { return project.id == id; });
 
   if (it == projects.end())
+    throw 42;
+
+  return it->name;
+}
+
+std::string_view get_group_name(std::size_t id) {
+  auto it = std::find_if(groups.begin(), groups.end(),
+                         [id](const auto &group) { return group.id == id; });
+
+  if (it == groups.end())
     throw 42;
 
   return it->name;
@@ -463,12 +508,26 @@ void print(std::string_view title, const std::vector<task> &tasks) {
     if (!task.description.empty())
       std::cout << std::format("      - {}\n", task.description);
 
-    if (!task.blocked_by_tasks.empty())
-      for (auto id : task.blocked_by_tasks)
+    if (!task.dependencies.empty())
+      for (auto id : task.dependencies)
         std::cout << std::format("      x {:3} {}\n", id, get_title(id));
   }
   std::cout << '\n';
 }
+
+namespace ftxui {
+
+Element multiline_text(const std::string &the_text) {
+  Elements output;
+  std::stringstream ss(the_text);
+  std::string line;
+  while (std::getline(ss, line)) {
+    output.push_back(paragraph(line));
+  }
+  return vbox(output);
+}
+
+} // namespace ftxui
 
 namespace gui {
 
@@ -490,11 +549,48 @@ struct ticket {
       result.push_back(ftxui::Container::Horizontal(
           {ftxui::Checkbox("", &show_description),
            ftxui::Renderer([&] {
-             return ftxui::paragraph(task_->description);
+             return ftxui::multiline_text(task_->description);
            }) | ftxui::Maybe(&show_description)}));
     }
 
-    widget = ftxui::Container::Vertical(result);
+    if (!task.dependencies.empty()) {
+      ftxui::Elements blockers;
+      for (auto id : task.dependencies)
+        blockers.push_back(
+            ftxui::text(std::format("{:3} {}", id, get_title(id))));
+
+      result.push_back(ftxui::Renderer([=] {
+        return ftxui::window(ftxui::text("Dependencies"),
+                             ftxui::vbox(blockers));
+      }));
+    }
+
+    if (!task.requirements.empty()) {
+      ftxui::Elements blockers;
+      for (auto id : task.requirements)
+        blockers.push_back(
+            ftxui::text(std::format("{:3} {}", id, get_group_name(id))));
+
+      result.push_back(ftxui::Renderer([=] {
+        return ftxui::window(ftxui::text("Requirements"),
+                             ftxui::vbox(blockers));
+      }));
+    }
+
+    if (task.after) {
+      //  red when blocking?
+      result.push_back(ftxui::Renderer([&] {
+        return ftxui::window(
+            ftxui::text("After"),
+            // TODO use formatter calendar after it has landed.
+            ftxui::text(std::format("{}.{:02}.{:02}",
+                                    static_cast<int>(task.after->year()),
+                                    static_cast<unsigned>(task.after->month()),
+                                    static_cast<unsigned>(task.after->day()))));
+      }));
+    }
+
+    widget = ftxui::Container::Vertical(result) | ftxui::border;
   }
 
   const task *task_;
@@ -530,12 +626,12 @@ ftxui::Element create_widget(const task &task) {
 
   if (!task.description.empty()) {
     if (task.status == task::tstatus::progress)
-      result.push_back(ftxui::paragraph(task.description));
+      result.push_back(ftxui::multiline_text(task.description));
   }
 
-  if (!task.blocked_by_tasks.empty()) {
+  if (!task.dependencies.empty()) {
     ftxui::Elements blockers;
-    for (auto id : task.blocked_by_tasks)
+    for (auto id : task.dependencies)
       blockers.push_back(
           ftxui::text(std::format("{:3} {}", id, get_title(id))));
 
