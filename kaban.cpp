@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <cstdlib>
 #include <format>
@@ -6,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 std::size_t parse_id(std::string_view input) {
@@ -54,9 +56,75 @@ bool parse_bool(std::string_view input) {
   throw 42;
 }
 
+template <class F> struct delay {
+  [[nodiscard]] explicit delay(F &&f) : f_(std::move(f)) {}
+
+  ~delay() { f_(); }
+
+  F f_;
+};
+
+struct parser {
+  explicit parser(std::istream &stream)
+      : data_(std::istreambuf_iterator<char>(stream), {}) {}
+  enum tresult { eof, empty, header, pair };
+
+  std::pair<tresult, std::array<std::string_view, 2>> parse() {
+
+    if (cursor_ == data_.end())
+      return {tresult::eof, {}};
+
+    switch (*cursor_) {
+    case '\n':
+      ++cursor_;
+      return {tresult::empty, {}};
+
+    case '[': {
+      auto end = std::find(cursor_ + 1, data_.end(), '\n');
+      delay _{[&] { cursor_ = end + (end != data_.end()); }};
+      return {tresult::header, {std::string_view{cursor_, end}, {}}};
+    }
+    }
+
+    auto separator = std::find(cursor_ + 1, data_.end(), '=');
+    if (separator == data_.end())
+      throw 42;
+
+    auto begin = separator + 1;
+    auto end = std::find(begin, data_.end(), '\n');
+
+    std::string_view value{begin, end};
+    if (value == "<<<") {
+      // multiline value
+      if (end == data_.end())
+        throw 42;
+      begin = end + 1;
+
+      while (true) {
+        auto pos = end + 1;
+        end = std::find(pos, data_.end(), '\n');
+        if (end == data_.end())
+          throw 42;
+        if (std::string_view{pos, end} == ">>>") {
+          value = std::string_view{begin, pos - 1};
+          break;
+        }
+      }
+    }
+
+    delay _{[&] { cursor_ = end + (end != data_.end()); }};
+
+    return {tresult::pair, {std::string_view{cursor_, separator}, value}};
+  }
+
+private:
+  std::string data_{};
+  std::string::iterator cursor_{data_.begin()};
+};
+
 struct project {
-  explicit project(std::istream &stream) {
-    parse(stream);
+  explicit project(parser &parser) {
+    parse(parser);
     validate();
   }
   std::size_t id;
@@ -65,7 +133,7 @@ struct project {
   bool active{true};
 
 private:
-  void parse(std::istream &stream);
+  void parse(parser &parser);
 
   void validate() const {
     if (id == 0)
@@ -77,8 +145,8 @@ private:
 
 struct task {
 
-  explicit task(std::istream &stream) {
-    parse(stream);
+  explicit task(parser &parser) {
+    parse(parser);
     validate();
   }
 
@@ -99,7 +167,7 @@ struct task {
   std::vector<std::size_t> blocked_by_tasks;
 
 private:
-  void parse(std::istream &stream);
+  void parse(parser &parser);
 
   void validate() const {
     if (id == 0)
@@ -128,62 +196,101 @@ private:
 std::vector<project> projects;
 std::vector<task> tasks;
 
-void project::parse(std::istream &stream) {
-  std::string line;
-  while (std::getline(stream, line)) {
-    if (line.empty())
+void project::parse(parser &parser) {
+
+  while (true) {
+    std::pair<parser::tresult, std::array<std::string_view, 2>> line =
+        parser.parse();
+    switch (line.first) {
+    case parser::tresult::eof:
+    case parser::tresult::empty:
       return;
 
-    int pos = line.find('=');
-    if (line.substr(0, pos) == "id")
-      id = parse_id(line.substr(pos + 1));
-    else if (line.substr(0, pos) == "name")
-      name = line.substr(pos + 1);
-    else if (line.substr(0, pos) == "description")
-      description = line.substr(pos + 1);
-    else if (line.substr(0, pos) == "active")
-      active = parse_bool(line.substr(pos + 1));
-    else
+    case parser::tresult::header:
       throw 42;
+    case parser::tresult::pair:
+
+      if (line.second[0] == "id")
+        id = parse_id(line.second[1]);
+      else if (line.second[0] == "name")
+        name = line.second[1];
+      else if (line.second[0] == "description")
+        description = line.second[1];
+      else if (line.second[0] == "active")
+        active = parse_bool(line.second[1]);
+      else
+        throw 42;
+    }
   }
 }
 
-void task::parse(std::istream &stream) {
-  std::string line;
-  while (std::getline(stream, line)) {
-    if (line.empty())
+void task::parse(parser &parser) {
+
+  while (true) {
+    std::pair<parser::tresult, std::array<std::string_view, 2>> line =
+        parser.parse();
+    switch (line.first) {
+    case parser::tresult::eof:
+    case parser::tresult::empty:
       return;
 
-    int pos = line.find('=');
-    if (line.substr(0, pos) == "id")
-      id = parse_id(line.substr(pos + 1));
-    else if (line.substr(0, pos) == "project")
-      project = parse_id(line.substr(pos + 1));
-    else if (line.substr(0, pos) == "title")
-      title = line.substr(pos + 1);
-    else if (line.substr(0, pos) == "description")
-      description = line.substr(pos + 1);
-    else if (line.substr(0, pos) == "status")
-      status = parse_status(line.substr(pos + 1));
-    else if (line.substr(0, pos) == "blocked_by_tasks")
-      blocked_by_tasks = parse_id_list(line.substr(pos + 1));
+    case parser::tresult::header:
+      throw 42;
+
+    case parser::tresult::pair:
+      if (line.second[0] == "id")
+        id = parse_id(line.second[1]);
+      else if (line.second[0] == "project")
+        project = parse_id(line.second[1]);
+      else if (line.second[0] == "title")
+        title = line.second[1];
+      else if (line.second[0] == "description")
+        description = line.second[1];
+      else if (line.second[0] == "status")
+        status = parse_status(line.second[1]);
+      else if (line.second[0] == "blocked_by_tasks")
+        blocked_by_tasks = parse_id_list(line.second[1]);
+#if 0
+      else
+        throw 42;
+#endif
+    }
   }
 }
 void parse(std::ifstream &file) {
-  std::string line;
-  while (std::getline(file, line)) {
-    if (line == "[project]")
-      projects.emplace_back(file);
+  parser parser(file);
+  while (true) {
+    std::pair<parser::tresult, std::array<std::string_view, 2>> line =
+        parser.parse();
+    switch (line.first) {
+    case parser::tresult::eof:
+      return;
+    case parser::tresult::empty:
+      /* DO NOTHING */
+      break;
+
+    case parser::tresult::header:
+      if (line.second[0] == "[project]")
+        projects.emplace_back(parser);
 #if 0
-    else if (line == "[group]")
-      groups.emplace_back(file);
+      else if (line.second[0] == "[group]")
+        groups.emplace_back(file);
 #endif
-    else if (line == "[task]")
-      tasks.emplace_back(file);
+      else if (line.second[0] == "[task]")
+        tasks.emplace_back(parser);
 #if 0
-    else if (!line.empty())
+      else
+        throw 42;
+#endif
+      break;
+
+    case parser::tresult::pair:
+#if 0
       throw 42;
+#else
+      break;
 #endif
+    }
   }
 }
 
