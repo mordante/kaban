@@ -1,3 +1,6 @@
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/screen.hpp>
+
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -366,12 +369,39 @@ void print(std::string_view title, const std::vector<task> &tasks) {
   std::cout << '\n';
 }
 
+std::shared_ptr<ftxui::Node> create_widget(const task &task) {
+  ftxui::Elements result;
+
+  result.push_back(ftxui::text(
+      task.project ? std::format("{:3} [{}] {}", task.id,
+                                 get_project_name(task.project), task.title)
+                   : std::format("{:3} {}", task.id, task.title)));
+
+  if (!task.description.empty()) {
+    if (task.status == task::tstatus::progress)
+      result.push_back(ftxui::paragraph(task.description));
+  }
+
+  if (!task.blocked_by_tasks.empty()) {
+    ftxui::Elements blockers;
+    for (auto id : task.blocked_by_tasks)
+      blockers.push_back(
+          ftxui::text(std::format("{:3} {}", id, get_title(id))));
+
+    result.push_back(
+        ftxui::window(ftxui::text("Blockers"), ftxui::vbox(blockers)));
+  }
+
+  return ftxui::vbox(result) | ftxui::border;
+}
+
 int main(int argc, const char *argv[]) {
   char *home = std::getenv("HOME");
   std::ifstream file{home + std::string{"/kaban"}};
   parse(file);
   std::cout << "Found " << tasks.size() << " tasks\n";
 
+#if 0
   std::vector<task> inactive;
   std::vector<task> blocked;
   std::vector<task> backlog;
@@ -390,6 +420,7 @@ int main(int argc, const char *argv[]) {
     else if (task.status == task::tstatus::review)
       review.push_back(task);
   }
+
   print("REVIEW", review);
   print("PROGRESS", progress);
   print("BACKLOG", backlog);
@@ -397,4 +428,48 @@ int main(int argc, const char *argv[]) {
     print("BLOCKED", blocked);
     print("INACTIVE", inactive);
   }
+#endif
+
+  ftxui::Elements inactive;
+  ftxui::Elements blocked;
+  ftxui::Elements backlog;
+  ftxui::Elements progress;
+  ftxui::Elements review;
+  for (const auto &task : tasks) {
+    if (task.status == task::tstatus::backlog) {
+      if (is_blocked(task))
+        blocked.push_back(create_widget(task));
+      else if (!is_active(task))
+        inactive.push_back(create_widget(task));
+      else
+        backlog.push_back(create_widget(task));
+    } else if (task.status == task::tstatus::progress)
+      progress.push_back(create_widget(task));
+    else if (task.status == task::tstatus::review)
+      review.push_back(create_widget(task));
+  }
+
+  ftxui::Elements columns;
+  if (argc == 2 && strcmp(argv[1], "-b") == 0) {
+    columns.push_back(ftxui::window(
+        ftxui::text("Inactive"),
+        ftxui::vbox(inactive))); // XXX example has not text for first element
+    columns.push_back(
+        ftxui::window(ftxui::text("Blocked"), ftxui::vbox(blocked)));
+  }
+  columns.push_back(
+      ftxui::window(ftxui::text("Backlog"), ftxui::vbox(backlog)));
+  columns.push_back(
+      ftxui::window(ftxui::text("In progress"), ftxui::vbox(progress)) |
+      ftxui::flex);
+  columns.push_back(
+      ftxui::window(ftxui::text("In review"), ftxui::vbox(review)));
+
+  ftxui::Element board = ftxui::hbox(columns);
+
+  auto screen = ftxui::Screen::Create(ftxui::Dimension::Full(),    // Width
+                                      ftxui::Dimension::Fit(board) // Height
+  );
+  ftxui::Render(screen, board);
+  screen.Print();
 }
