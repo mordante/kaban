@@ -149,6 +149,50 @@ private:
   }
 };
 
+struct group {
+  explicit group(parser &parser) {
+    parse(parser);
+    validate();
+  }
+  std::size_t id;
+  std::string name;
+  std::string description;
+  size_t project{0};
+  bool active{true};
+
+private:
+  void parse(parser &parser);
+
+  void validate() const {
+    if (id == 0)
+      throw 42;
+    if (project == 0)
+      throw 42;
+    if (name.empty())
+      throw 42;
+  }
+};
+
+struct label {
+  explicit label(parser &parser) {
+    parse(parser);
+    validate();
+  }
+  std::size_t id;
+  std::string name;
+  std::string description;
+
+private:
+  void parse(parser &parser);
+
+  void validate() const {
+    if (id == 0)
+      throw 42;
+    if (name.empty())
+      throw 42;
+  }
+};
+
 struct task {
 
   explicit task(parser &parser) {
@@ -170,6 +214,7 @@ struct task {
   std::string description;
   tstatus status{tstatus::backlog};
   size_t project{0};
+  size_t group{0};
   std::vector<std::size_t> blocked_by_tasks;
 
 private:
@@ -179,6 +224,8 @@ private:
     if (id == 0)
       throw 42;
     if (title.empty())
+      throw 42;
+    if (project && group)
       throw 42;
   }
   tstatus parse_status(std::string_view input) {
@@ -200,6 +247,8 @@ private:
 };
 
 std::vector<project> projects;
+std::vector<group> groups;
+std::vector<label> labels;
 std::vector<task> tasks;
 
 void project::parse(parser &parser) {
@@ -230,6 +279,62 @@ void project::parse(parser &parser) {
   }
 }
 
+void group::parse(parser &parser) {
+
+  while (true) {
+    std::pair<parser::tresult, std::array<std::string_view, 2>> line =
+        parser.parse();
+    switch (line.first) {
+    case parser::tresult::eof:
+    case parser::tresult::empty:
+      return;
+
+    case parser::tresult::header:
+      throw 42;
+    case parser::tresult::pair:
+
+      if (line.second[0] == "id")
+        id = parse_id(line.second[1]);
+      else if (line.second[0] == "project")
+        project = parse_id(line.second[1]);
+      else if (line.second[0] == "name")
+        name = line.second[1];
+      else if (line.second[0] == "description")
+        description = line.second[1];
+      else if (line.second[0] == "active")
+        active = parse_bool(line.second[1]);
+      else
+        throw 42;
+    }
+  }
+}
+
+void label::parse(parser &parser) {
+
+  while (true) {
+    std::pair<parser::tresult, std::array<std::string_view, 2>> line =
+        parser.parse();
+    switch (line.first) {
+    case parser::tresult::eof:
+    case parser::tresult::empty:
+      return;
+
+    case parser::tresult::header:
+      throw 42;
+    case parser::tresult::pair:
+
+      if (line.second[0] == "id")
+        id = parse_id(line.second[1]);
+      else if (line.second[0] == "name")
+        name = line.second[1];
+      else if (line.second[0] == "description")
+        description = line.second[1];
+      else
+        throw 42;
+    }
+  }
+}
+
 void task::parse(parser &parser) {
 
   while (true) {
@@ -248,6 +353,8 @@ void task::parse(parser &parser) {
         id = parse_id(line.second[1]);
       else if (line.second[0] == "project")
         project = parse_id(line.second[1]);
+      else if (line.second[0] == "group")
+        group = parse_id(line.second[1]);
       else if (line.second[0] == "title")
         title = line.second[1];
       else if (line.second[0] == "description")
@@ -256,10 +363,8 @@ void task::parse(parser &parser) {
         status = parse_status(line.second[1]);
       else if (line.second[0] == "blocked_by_tasks")
         blocked_by_tasks = parse_id_list(line.second[1]);
-#if 0
       else
         throw 42;
-#endif
     }
   }
 }
@@ -278,24 +383,16 @@ void parse(std::ifstream &file) {
     case parser::tresult::header:
       if (line.second[0] == "[project]")
         projects.emplace_back(parser);
-#if 0
       else if (line.second[0] == "[group]")
-        groups.emplace_back(file);
-#endif
+        groups.emplace_back(parser);
       else if (line.second[0] == "[task]")
         tasks.emplace_back(parser);
-#if 0
       else
         throw 42;
-#endif
       break;
 
     case parser::tresult::pair:
-#if 0
       throw 42;
-#else
-      break;
-#endif
     }
   }
 }
