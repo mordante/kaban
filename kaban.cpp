@@ -426,6 +426,8 @@ void parse(std::ifstream &file) {
     case parser::tresult::header:
       if (line.second[0] == "[project]")
         projects.emplace_back(parser);
+      else if (line.second[0] == "[label]")
+        labels.emplace_back(parser);
       else if (line.second[0] == "[group]")
         groups.emplace_back(parser);
       else if (line.second[0] == "[task]")
