@@ -10,6 +10,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -371,7 +372,61 @@ void print(std::string_view title, const std::vector<task> &tasks) {
   std::cout << '\n';
 }
 
-std::shared_ptr<ftxui::Node> create_widget(const task &task) {
+namespace gui {
+
+struct ticket {
+  ticket(const task &task) : task_(std::addressof(task)) {
+
+    ftxui::Components result;
+
+    result.push_back(ftxui::Renderer([&] {
+      return ftxui::text(task_->project
+                             ? std::format("{:3} [{}] {}", task_->id,
+                                           get_project_name(task_->project),
+                                           task_->title)
+                             : std::format("{:3} {}", task_->id, task_->title));
+    }));
+
+    if (!task_->description.empty()) {
+      show_description = task_->status == task::tstatus::progress;
+      result.push_back(ftxui::Container::Horizontal(
+          {ftxui::Checkbox("", &show_description),
+           ftxui::Renderer([&] {
+             return ftxui::paragraph(task_->description);
+           }) | ftxui::Maybe(&show_description)}));
+    }
+
+    widget = ftxui::Container::Vertical(result);
+  }
+
+  const task *task_;
+  bool show_description{false};
+  ftxui::Component widget;
+};
+
+struct column {
+  column(const std::string &title, std::vector<task> tasks) {
+    for (const auto &task : tasks)
+      widgets_.emplace_back(std::make_unique<ticket>(task));
+
+    // std::ranges::to is not available in libc++.
+    ftxui::Components elements;
+    std::ranges::copy(widgets_ |
+                          // whould it be possible to directly use a projection?
+                          std::views::transform([](const auto &ticket) {
+                            return ticket->widget;
+                          }),
+                      std::back_inserter(elements));
+
+    column_ = ftxui::Container::Vertical(elements);
+  }
+  std::vector<std::unique_ptr<ticket>> widgets_;
+  ftxui::Component column_;
+};
+
+} // namespace gui
+
+ftxui::Element create_widget(const task &task) {
   ftxui::Elements result;
 
   result.push_back(ftxui::text(
@@ -403,105 +458,193 @@ int main(int argc, const char *argv[]) {
   parse(file);
   std::cout << "Found " << tasks.size() << " tasks\n";
 
-  ftxui::Elements inactive;
-  ftxui::Elements blocked;
-  ftxui::Elements backlog;
-  ftxui::Elements progress;
-  ftxui::Elements review;
+  std::vector<gui::ticket> inactive;
+  std::vector<gui::ticket> blocked;
+  std::vector<gui::ticket> backlog;
+  std::vector<gui::ticket> progress;
+  std::vector<gui::ticket> review;
+
+  inactive.reserve(tasks.size());
+  blocked.reserve(tasks.size());
+  backlog.reserve(tasks.size());
+  progress.reserve(tasks.size());
+  review.reserve(tasks.size());
   for (const auto &task : tasks) {
     if (task.status == task::tstatus::backlog) {
       if (is_blocked(task))
-        blocked.push_back(create_widget(task));
+        blocked.emplace_back(task);
       else if (!is_active(task))
-        inactive.push_back(create_widget(task));
+        inactive.emplace_back(task);
       else
-        backlog.push_back(create_widget(task));
+        backlog.emplace_back(task);
     } else if (task.status == task::tstatus::progress)
-      progress.push_back(create_widget(task));
+      progress.emplace_back(task);
     else if (task.status == task::tstatus::review)
-      review.push_back(create_widget(task));
+      review.emplace_back(task);
   }
 
   bool enable_all = false;
   bool enable_refinement = false;
   std::array<bool, 5> enable_columns{false, false, true, true, true};
 
-  auto board = [&] {
-    ftxui::Elements columns;
-    if (enable_all | enable_refinement | enable_columns[0])
-      columns.push_back(ftxui::window(
-          ftxui::text("Inactive"),
-          ftxui::vbox(inactive))); // XXX example has not text for first element
-    if (enable_all | enable_refinement | enable_columns[1])
-      columns.push_back(
-          ftxui::window(ftxui::text("Blocked"), ftxui::vbox(blocked)));
+  ftxui::ScreenInteractive screen = ftxui::ScreenInteractive::Fullscreen();
 
-    if (enable_all | enable_refinement | enable_columns[2])
-      columns.push_back(
-          ftxui::window(ftxui::text("Backlog"), ftxui::vbox(backlog)));
+  // INACTIVE
+  ftxui::Components inactive_components;
+  inactive_components.reserve(inactive.size());
+  std::ranges::copy(inactive |
+                        std::views::transform([](const gui::ticket &ticket) {
+                          return ticket.widget;
+                        }),
+                    std::back_inserter(inactive_components));
+  ftxui::Component inactive_tickets =
+      ftxui::Container::Vertical(inactive_components);
 
-    if (enable_all | enable_columns[3])
-      columns.push_back(
-          ftxui::window(ftxui::text("In progress"), ftxui::vbox(progress)) |
-          ftxui::flex);
+  // BLOCKED
+  ftxui::Components blocked_components;
+  blocked_components.reserve(blocked.size());
+  std::ranges::copy(blocked |
+                        std::views::transform([](const gui::ticket &ticket) {
+                          return ticket.widget;
+                        }),
+                    std::back_inserter(blocked_components));
+  ftxui::Component blocked_tickets =
+      ftxui::Container::Vertical(blocked_components);
 
-    if (enable_all | enable_columns[4])
-      columns.push_back(
-          ftxui::window(ftxui::text("In review"), ftxui::vbox(review)));
+  // BACKLOG
+  ftxui::Components backlog_components;
+  backlog_components.reserve(backlog.size());
+  std::ranges::copy(backlog |
+                        std::views::transform([](const gui::ticket &ticket) {
+                          return ticket.widget;
+                        }),
+                    std::back_inserter(backlog_components));
+  ftxui::Component backlog_tickets =
+      ftxui::Container::Vertical(backlog_components);
 
-    return ftxui::hbox(columns);
-  };
+  // PROGRESS
+  ftxui::Components progress_components;
+  progress_components.reserve(progress.size());
+  std::ranges::copy(progress |
+                        std::views::transform([](const gui::ticket &ticket) {
+                          return ticket.widget;
+                        }),
+                    std::back_inserter(progress_components));
+  ftxui::Component progress_tickets =
+      ftxui::Container::Vertical(progress_components);
 
-  auto screen = ftxui::ScreenInteractive::Fullscreen();
+  // REVIEW
+  ftxui::Components review_components;
+  review_components.reserve(review.size());
+  std::ranges::copy(review |
+                        std::views::transform([](const gui::ticket &ticket) {
+                          return ticket.widget;
+                        }),
+                    std::back_inserter(review_components));
+  ftxui::Component review_tickets =
+      ftxui::Container::Vertical(review_components);
 
-  auto quit = ftxui::Button("Quit", screen.ExitLoopClosure());
-  auto show_all_columns = ftxui::Checkbox(
-      std::format("All ({}/{})", tasks.size(), tasks.size()), &enable_all);
-  auto show_refinement_columns = ftxui::Checkbox(
-      std::format("Refinement ({}/{})",
-                  inactive.size() + blocked.size() + backlog.size(),
-                  tasks.size()),
-      &enable_refinement);
-  auto show_column_inactive = ftxui::Checkbox(
-      std::format("Inactive ({}/{})", inactive.size(), tasks.size()),
-      &enable_columns[0]);
-  auto show_column_blocked = ftxui::Checkbox(
-      std::format("Blocked ({}/{})", blocked.size(), tasks.size()),
-      &enable_columns[1]);
-  auto show_column_backlog = ftxui::Checkbox(
-      std::format("Backlog ({}/{})", backlog.size(), tasks.size()),
-      &enable_columns[2]);
-  auto show_column_progress = ftxui::Checkbox(
-      std::format("In progress ({}/{})", progress.size(), tasks.size()),
-      &enable_columns[3]);
-  auto show_column_review = ftxui::Checkbox(
-      std::format("In review ({}/{})", review.size(), tasks.size()),
-      &enable_columns[4]);
+  // BOARD
+  screen.Loop(
+      ftxui::Container::Vertical({
+          ftxui::Button("Quit", screen.ExitLoopClosure()),
+          ftxui::Checkbox(
+              std::format("All ({}/{})", tasks.size(), tasks.size()),
+              &enable_all),
+          ftxui::Checkbox(
+              std::format("Refinement ({}/{})",
+                          inactive.size() + blocked.size() + backlog.size(),
+                          tasks.size()),
+              &enable_refinement),
+          ftxui::Container::Horizontal(
+              {ftxui::Checkbox(std::format("Inactive ({}/{})", inactive.size(),
+                                           tasks.size()),
+                               &enable_columns[0]),
+               ftxui::Checkbox(
+                   std::format("Blocked ({}/{})", blocked.size(), tasks.size()),
+                   &enable_columns[1]),
+               ftxui::Checkbox(
+                   std::format("Backlog ({}/{})", backlog.size(), tasks.size()),
+                   &enable_columns[2]),
+               ftxui::Checkbox(std::format("In progress ({}/{})",
+                                           progress.size(), tasks.size()),
+                               &enable_columns[3]),
+               ftxui::Checkbox(std::format("In review ({}/{})", review.size(),
+                                           tasks.size()),
+                               &enable_columns[4])}),
+          //
+          ftxui::Container::Horizontal({
+              // Inactive
+              ftxui::Container::Vertical(
+                  {ftxui::Renderer(inactive_tickets,
+                                   [&] {                          //
+                                     return ftxui::window(        //
+                                         ftxui::text("Inactive"), //
+                                         (inactive_tickets | ftxui::Maybe([&] {
+                                            return !inactive.empty();
+                                          }))->Render() //
+                                     );                 //
+                                   })}) |
+                  ftxui::Maybe([&] {
+                    return enable_all | enable_refinement | enable_columns[0];
+                  }),
 
-  // Note this seems a bit a duplicate of the component, not sure why.
-  auto layout = ftxui::Container::Vertical(
-      {quit, show_all_columns, show_refinement_columns, show_column_inactive,
-       show_column_blocked, show_column_backlog, show_column_progress,
-       show_column_review});
+              // Blocked
+              ftxui::Container::Vertical(
+                  {ftxui::Renderer(blocked_tickets,
+                                   [&] {                         //
+                                     return ftxui::window(       //
+                                         ftxui::text("Blocked"), //
+                                         (blocked_tickets | ftxui::Maybe([&] {
+                                            return !blocked.empty();
+                                          }))->Render() //
+                                     );                 //
+                                   })}) |
+                  ftxui::Maybe([&] {
+                    return enable_all | enable_refinement | enable_columns[1];
+                  }),
 
-  auto component = ftxui::Renderer(layout, [&] {
-    return ftxui::vbox({
-               quit->Render(),                    //
-               show_all_columns->Render(),        //
-               show_refinement_columns->Render(), //
-               ftxui::hbox({
-                   show_column_inactive->Render(), //
-                   show_column_blocked->Render(),  //
-                   show_column_backlog->Render(),  //
-                   show_column_progress->Render(), //
-                   show_column_review->Render(),   //
-               }),                                 //
-               ftxui::separator(),                 //
-               board()                             //
-           }) |
-           ftxui::xflex | ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 40) |
-           ftxui::border;
-  });
-
-  screen.Loop(component);
+              // Backlog
+              ftxui::Container::Vertical(
+                  {ftxui::Renderer(backlog_tickets,
+                                   [&] {                         //
+                                     return ftxui::window(       //
+                                         ftxui::text("Backlog"), //
+                                         (backlog_tickets | ftxui::Maybe([&] {
+                                            return !backlog.empty();
+                                          }))->Render() //
+                                     );                 //
+                                   })}) |
+                  ftxui::Maybe([&] {
+                    return enable_all | enable_refinement | enable_columns[2];
+                  }),
+              // Progress
+              ftxui::Container::Vertical(
+                  {ftxui::Renderer(progress_tickets,
+                                   [&] {                             //
+                                     return ftxui::window(           //
+                                         ftxui::text("In progress"), //
+                                         (progress_tickets | ftxui::Maybe([&] {
+                                            return !progress.empty();
+                                          }))->Render() //
+                                     );                 //
+                                   })}) |
+                  ftxui::Maybe([&] { return enable_all | enable_columns[3]; }),
+              // Review
+              ftxui::Container::Vertical(
+                  {ftxui::Renderer(review_tickets,
+                                   [&] {                           //
+                                     return ftxui::window(         //
+                                         ftxui::text("In Review"), //
+                                         (review_tickets | ftxui::Maybe([&] {
+                                            return !review.empty();
+                                          }))->Render() //
+                                     );                 //
+                                   })}) |               //
+                  ftxui::Maybe([&] { return enable_all | enable_columns[4]; })
+              //
+          }) //
+      })     //
+      | ftxui::xflex | ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 40) |
+      ftxui::border); //
 }
