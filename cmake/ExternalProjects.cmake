@@ -4,7 +4,7 @@ FetchContent_Declare(
   ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
   # v3.0.0 uses deprecated code, therefore use the latest master.
-  GIT_TAG b9f51844c356f47151e38fcf839ca170a687f8f7
+  GIT_TAG 4dc1a9fff94527a1acffb60f874d8800aecb7217
 )
 FetchContent_GetProperties(ftxui)
 if(NOT ftxui_POPULATED)
