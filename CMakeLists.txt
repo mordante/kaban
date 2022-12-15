@@ -22,4 +22,5 @@ target_link_libraries(kaban
 	PRIVATE
 		ftxui::screen
 		ftxui::dom
+		ftxui::component
 )

@@ -1,3 +1,5 @@
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 
@@ -401,35 +403,6 @@ int main(int argc, const char *argv[]) {
   parse(file);
   std::cout << "Found " << tasks.size() << " tasks\n";
 
-#if 0
-  std::vector<task> inactive;
-  std::vector<task> blocked;
-  std::vector<task> backlog;
-  std::vector<task> progress;
-  std::vector<task> review;
-  for (const auto &task : tasks) {
-    if (task.status == task::tstatus::backlog) {
-      if (is_blocked(task))
-        blocked.push_back(task);
-      else if (!is_active(task))
-        inactive.push_back(task);
-      else
-        backlog.push_back(task);
-    } else if (task.status == task::tstatus::progress)
-      progress.push_back(task);
-    else if (task.status == task::tstatus::review)
-      review.push_back(task);
-  }
-
-  print("REVIEW", review);
-  print("PROGRESS", progress);
-  print("BACKLOG", backlog);
-  if (argc == 2 && strcmp(argv[1], "-b") == 0) {
-    print("BLOCKED", blocked);
-    print("INACTIVE", inactive);
-  }
-#endif
-
   ftxui::Elements inactive;
   ftxui::Elements blocked;
   ftxui::Elements backlog;
@@ -449,27 +422,86 @@ int main(int argc, const char *argv[]) {
       review.push_back(create_widget(task));
   }
 
-  ftxui::Elements columns;
-  if (argc == 2 && strcmp(argv[1], "-b") == 0) {
-    columns.push_back(ftxui::window(
-        ftxui::text("Inactive"),
-        ftxui::vbox(inactive))); // XXX example has not text for first element
-    columns.push_back(
-        ftxui::window(ftxui::text("Blocked"), ftxui::vbox(blocked)));
-  }
-  columns.push_back(
-      ftxui::window(ftxui::text("Backlog"), ftxui::vbox(backlog)));
-  columns.push_back(
-      ftxui::window(ftxui::text("In progress"), ftxui::vbox(progress)) |
-      ftxui::flex);
-  columns.push_back(
-      ftxui::window(ftxui::text("In review"), ftxui::vbox(review)));
+  bool enable_all = false;
+  bool enable_refinement = false;
+  std::array<bool, 5> enable_columns{false, false, true, true, true};
 
-  ftxui::Element board = ftxui::hbox(columns);
+  auto board = [&] {
+    ftxui::Elements columns;
+    if (enable_all | enable_refinement | enable_columns[0])
+      columns.push_back(ftxui::window(
+          ftxui::text("Inactive"),
+          ftxui::vbox(inactive))); // XXX example has not text for first element
+    if (enable_all | enable_refinement | enable_columns[1])
+      columns.push_back(
+          ftxui::window(ftxui::text("Blocked"), ftxui::vbox(blocked)));
 
-  auto screen = ftxui::Screen::Create(ftxui::Dimension::Full(),    // Width
-                                      ftxui::Dimension::Fit(board) // Height
-  );
-  ftxui::Render(screen, board);
-  screen.Print();
+    if (enable_all | enable_refinement | enable_columns[2])
+      columns.push_back(
+          ftxui::window(ftxui::text("Backlog"), ftxui::vbox(backlog)));
+
+    if (enable_all | enable_columns[3])
+      columns.push_back(
+          ftxui::window(ftxui::text("In progress"), ftxui::vbox(progress)) |
+          ftxui::flex);
+
+    if (enable_all | enable_columns[4])
+      columns.push_back(
+          ftxui::window(ftxui::text("In review"), ftxui::vbox(review)));
+
+    return ftxui::hbox(columns);
+  };
+
+  auto screen = ftxui::ScreenInteractive::Fullscreen();
+
+  auto quit = ftxui::Button("Quit", screen.ExitLoopClosure());
+  auto show_all_columns = ftxui::Checkbox(
+      std::format("All ({}/{})", tasks.size(), tasks.size()), &enable_all);
+  auto show_refinement_columns = ftxui::Checkbox(
+      std::format("Refinement ({}/{})",
+                  inactive.size() + blocked.size() + backlog.size(),
+                  tasks.size()),
+      &enable_refinement);
+  auto show_column_inactive = ftxui::Checkbox(
+      std::format("Inactive ({}/{})", inactive.size(), tasks.size()),
+      &enable_columns[0]);
+  auto show_column_blocked = ftxui::Checkbox(
+      std::format("Blocked ({}/{})", blocked.size(), tasks.size()),
+      &enable_columns[1]);
+  auto show_column_backlog = ftxui::Checkbox(
+      std::format("Backlog ({}/{})", backlog.size(), tasks.size()),
+      &enable_columns[2]);
+  auto show_column_progress = ftxui::Checkbox(
+      std::format("In progress ({}/{})", progress.size(), tasks.size()),
+      &enable_columns[3]);
+  auto show_column_review = ftxui::Checkbox(
+      std::format("In review ({}/{})", review.size(), tasks.size()),
+      &enable_columns[4]);
+
+  // Note this seems a bit a duplicate of the component, not sure why.
+  auto layout = ftxui::Container::Vertical(
+      {quit, show_all_columns, show_refinement_columns, show_column_inactive,
+       show_column_blocked, show_column_backlog, show_column_progress,
+       show_column_review});
+
+  auto component = ftxui::Renderer(layout, [&] {
+    return ftxui::vbox({
+               quit->Render(),                    //
+               show_all_columns->Render(),        //
+               show_refinement_columns->Render(), //
+               ftxui::hbox({
+                   show_column_inactive->Render(), //
+                   show_column_blocked->Render(),  //
+                   show_column_backlog->Render(),  //
+                   show_column_progress->Render(), //
+                   show_column_review->Render(),   //
+               }),                                 //
+               ftxui::separator(),                 //
+               board()                             //
+           }) |
+           ftxui::xflex | ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 40) |
+           ftxui::border;
+  });
+
+  screen.Loop(component);
 }
