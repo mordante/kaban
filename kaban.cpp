@@ -458,8 +458,8 @@ bool is_blocked(const task &task) {
   }
   // TODO Validate requirements
   if (task.after)
-    return static_cast<std::chrono::sys_days>(*task.after) <=
-           std::chrono::system_clock::now();
+    return std::chrono::system_clock::now() <=
+           static_cast<std::chrono::sys_days>(*task.after);
   return false;
 }
 
@@ -614,7 +614,7 @@ struct ticket {
       }
 
       result.push_back(ftxui::text(task.title));
-      return ftxui::hbox(result);
+      return ftxui::hflow(result);
     }));
 
     if (!task_->description.empty()) {
