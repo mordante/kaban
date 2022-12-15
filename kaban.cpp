@@ -8,35 +8,6 @@
 #include <string_view>
 #include <vector>
 
-struct project {
-  std::size_t id;
-  std::string name;
-  std::string description;
-  bool active{true};
-};
-
-struct task {
-
-  enum class tstatus {
-    backlog,
-    selected, /**< Selected for development. */
-    progress, /**< In progress. */
-    review,   /**< In review. */
-    done,     /**< Completed the work. */
-    discarded /**< The task has been discarded. */
-  };
-
-  std::size_t id;
-  std::string title;
-  std::string description;
-  tstatus status{tstatus::backlog};
-  size_t project{0};
-  std::vector<std::size_t> blocked_by_tasks;
-};
-
-std::vector<project> projects;
-std::vector<task> tasks;
-
 std::size_t parse_id(std::string_view input) {
   std::size_t result;
   std::from_chars_result status =
@@ -73,23 +44,6 @@ std::vector<std::size_t> parse_id_list(std::string_view input) {
   }
 }
 
-task::tstatus parse_status(std::string_view input) {
-  if (input == "backlog")
-    return task::tstatus::backlog;
-  if (input == "selected")
-    return task::tstatus::selected;
-  if (input == "progress")
-    return task::tstatus::progress;
-  if (input == "review")
-    return task::tstatus::review;
-  if (input == "done")
-    return task::tstatus::done;
-  if (input == "discarded")
-    return task::tstatus::discarded;
-
-  throw 42;
-}
-
 bool parse_bool(std::string_view input) {
   if (input == "true")
     return true;
@@ -100,53 +54,136 @@ bool parse_bool(std::string_view input) {
   throw 42;
 }
 
-void parse(std::ifstream &file) {
-  enum class parsing { none, task, project };
-  parsing current = parsing::none;
+struct project {
+  explicit project(std::istream &stream) {
+    parse(stream);
+    validate();
+  }
+  std::size_t id;
+  std::string name;
+  std::string description;
+  bool active{true};
 
+private:
+  void parse(std::istream &stream);
+
+  void validate() const {
+    if (id == 0)
+      throw 42;
+    if (name.empty())
+      throw 42;
+  }
+};
+
+struct task {
+
+  explicit task(std::istream &stream) {
+    parse(stream);
+    validate();
+  }
+
+  enum class tstatus {
+    backlog,
+    selected, /**< Selected for development. */
+    progress, /**< In progress. */
+    review,   /**< In review. */
+    done,     /**< Completed the work. */
+    discarded /**< The task has been discarded. */
+  };
+
+  std::size_t id;
+  std::string title;
+  std::string description;
+  tstatus status{tstatus::backlog};
+  size_t project{0};
+  std::vector<std::size_t> blocked_by_tasks;
+
+private:
+  void parse(std::istream &stream);
+
+  void validate() const {
+    if (id == 0)
+      throw 42;
+    if (title.empty())
+      throw 42;
+  }
+  tstatus parse_status(std::string_view input) {
+    if (input == "backlog")
+      return task::tstatus::backlog;
+    if (input == "selected")
+      return task::tstatus::selected;
+    if (input == "progress")
+      return task::tstatus::progress;
+    if (input == "review")
+      return task::tstatus::review;
+    if (input == "done")
+      return task::tstatus::done;
+    if (input == "discarded")
+      return task::tstatus::discarded;
+
+    throw 42;
+  }
+};
+
+std::vector<project> projects;
+std::vector<task> tasks;
+
+void project::parse(std::istream &stream) {
+  std::string line;
+  while (std::getline(stream, line)) {
+    if (line.empty())
+      return;
+
+    int pos = line.find('=');
+    if (line.substr(0, pos) == "id")
+      id = parse_id(line.substr(pos + 1));
+    else if (line.substr(0, pos) == "name")
+      name = line.substr(pos + 1);
+    else if (line.substr(0, pos) == "description")
+      description = line.substr(pos + 1);
+    else if (line.substr(0, pos) == "active")
+      active = parse_bool(line.substr(pos + 1));
+    else
+      throw 42;
+  }
+}
+
+void task::parse(std::istream &stream) {
+  std::string line;
+  while (std::getline(stream, line)) {
+    if (line.empty())
+      return;
+
+    int pos = line.find('=');
+    if (line.substr(0, pos) == "id")
+      id = parse_id(line.substr(pos + 1));
+    else if (line.substr(0, pos) == "project")
+      project = parse_id(line.substr(pos + 1));
+    else if (line.substr(0, pos) == "title")
+      title = line.substr(pos + 1);
+    else if (line.substr(0, pos) == "description")
+      description = line.substr(pos + 1);
+    else if (line.substr(0, pos) == "status")
+      status = parse_status(line.substr(pos + 1));
+    else if (line.substr(0, pos) == "blocked_by_tasks")
+      blocked_by_tasks = parse_id_list(line.substr(pos + 1));
+  }
+}
+void parse(std::ifstream &file) {
   std::string line;
   while (std::getline(file, line)) {
-    if (current != parsing::none) {
-      if (line == "") {
-        current = parsing::none;
-        continue;
-      }
-
-      int pos = line.find('=');
-      if (current == parsing::project) {
-        if (line.substr(0, pos) == "id")
-          projects.back().id = parse_id(line.substr(pos + 1));
-        else if (line.substr(0, pos) == "name")
-          projects.back().name = line.substr(pos + 1);
-        else if (line.substr(0, pos) == "description")
-          projects.back().description = line.substr(pos + 1);
-        else if (line.substr(0, pos) == "active")
-          projects.back().active = parse_bool(line.substr(pos + 1));
-        else
-          throw 42;
-      } else if (current == parsing::task) {
-        if (line.substr(0, pos) == "id")
-          tasks.back().id = parse_id(line.substr(pos + 1));
-        else if (line.substr(0, pos) == "project")
-          tasks.back().project = parse_id(line.substr(pos + 1));
-        else if (line.substr(0, pos) == "title")
-          tasks.back().title = line.substr(pos + 1);
-        else if (line.substr(0, pos) == "description")
-          tasks.back().description = line.substr(pos + 1);
-        else if (line.substr(0, pos) == "status")
-          tasks.back().status = parse_status(line.substr(pos + 1));
-        else if (line.substr(0, pos) == "blocked_by_tasks")
-          tasks.back().blocked_by_tasks = parse_id_list(line.substr(pos + 1));
-      } else
-        throw 42;
-
-    } else if (line == "[project]") {
-      current = parsing::project;
-      projects.emplace_back();
-    } else if (line == "[task]") {
-      current = parsing::task;
-      tasks.emplace_back();
-    }
+    if (line == "[project]")
+      projects.emplace_back(file);
+#if 0
+    else if (line == "[group]")
+      groups.emplace_back(file);
+#endif
+    else if (line == "[task]")
+      tasks.emplace_back(file);
+#if 0
+    else if (!line.empty())
+      throw 42;
+#endif
   }
 }
 
