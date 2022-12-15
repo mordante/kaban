@@ -152,6 +152,8 @@ private:
   std::string::iterator cursor_{data_.begin()};
 };
 
+void validate_color(std::string_view input);
+
 struct project {
   explicit project(parser &parser) {
     parse(parser);
@@ -160,6 +162,7 @@ struct project {
   std::size_t id;
   std::string name;
   std::string description;
+  std::string color;
   bool active{true};
 
 private:
@@ -170,6 +173,8 @@ private:
       throw 42;
     if (name.empty())
       throw 42;
+    if (!color.empty())
+      validate_color(color);
   }
 };
 
@@ -182,6 +187,7 @@ struct group {
   std::string name;
   std::string description;
   size_t project{0};
+  std::string color;
   bool active{true};
 
 private:
@@ -194,6 +200,8 @@ private:
       throw 42;
     if (name.empty())
       throw 42;
+    if (!color.empty())
+      validate_color(color);
   }
 };
 
@@ -297,6 +305,8 @@ void project::parse(parser &parser) {
         name = line.second[1];
       else if (line.second[0] == "description")
         description = line.second[1];
+      else if (line.second[0] == "color")
+        color = line.second[1];
       else if (line.second[0] == "active")
         active = parse_bool(line.second[1]);
       else
@@ -329,6 +339,8 @@ void group::parse(parser &parser) {
         description = line.second[1];
       else if (line.second[0] == "active")
         active = parse_bool(line.second[1]);
+      else if (line.second[0] == "color")
+        color = line.second[1];
       else
         throw 42;
     }
@@ -472,26 +484,30 @@ std::string_view get_title(std::size_t id) {
   return it->title;
 }
 
-std::string_view get_project_name(std::size_t id) {
+const project &get_project(std::size_t id) {
   auto it =
       std::find_if(projects.begin(), projects.end(),
                    [id](const auto &project) { return project.id == id; });
 
   if (it == projects.end())
     throw 42;
-
-  return it->name;
+  return *it;
 }
 
-std::string_view get_group_name(std::size_t id) {
+std::string_view get_project_name(std::size_t id) {
+  return get_project(id).name;
+}
+
+const group &get_group(std::size_t id) {
   auto it = std::find_if(groups.begin(), groups.end(),
                          [id](const auto &group) { return group.id == id; });
 
   if (it == groups.end())
     throw 42;
-
-  return it->name;
+  return *it;
 }
+
+std::string_view get_group_name(std::size_t id) { return get_group(id).name; }
 
 void print(std::string_view title, const std::vector<task> &tasks) {
   if (tasks.empty())
@@ -531,17 +547,72 @@ Element multiline_text(const std::string &the_text) {
 
 namespace gui {
 
+ftxui::Color to_color(std::string_view input) {
+  if (input == "RED")
+    return ftxui::Color::Red;
+  if (input == "GREEN")
+    return ftxui::Color::Green;
+  if (input == "YELLOW")
+    return ftxui::Color::Yellow;
+  if (input == "BLUE")
+    return ftxui::Color::Blue;
+  if (input == "MAGENTA")
+    return ftxui::Color::Magenta;
+  if (input == "CYAN")
+    return ftxui::Color::Cyan;
+  if (input == "red")
+    return ftxui::Color::RedLight;
+  if (input == "green")
+    return ftxui::Color::GreenLight;
+  if (input == "yellow")
+    return ftxui::Color::YellowLight;
+  if (input == "blue")
+    return ftxui::Color::BlueLight;
+  if (input == "magenta")
+    return ftxui::Color::MagentaLight;
+  if (input == "cyan")
+    return ftxui::Color::CyanLight;
+
+  throw 42;
+}
+
 struct ticket {
   ticket(const task &task) : task_(std::addressof(task)) {
 
     ftxui::Components result;
 
     result.push_back(ftxui::Renderer([&] {
-      return ftxui::text(task_->project
-                             ? std::format("{:3} [{}] {}", task_->id,
-                                           get_project_name(task_->project),
-                                           task_->title)
-                             : std::format("{:3} {}", task_->id, task_->title));
+      // TODO ugly spacing hack.
+      ftxui::Elements result;
+      result.push_back(ftxui::text(std::format("{:3} ", task.id)));
+
+      if (size_t project_id =
+              task.group ? get_group(task.group).project : task.project;
+          project_id) {
+
+        const project &project = get_project(project_id);
+        if (!project.color.empty())
+          result.push_back(ftxui::bgcolor(
+              to_color(project.color), ftxui::text("[" + project.name + "]")));
+        else
+          result.push_back(ftxui::text("[" + project.name + "]"));
+        // TODO ugly spacing hack.
+        result.push_back(ftxui::text(" "));
+      }
+
+      if (task.group) {
+        const group &group = get_group(task.group);
+        if (!group.color.empty())
+          result.push_back(ftxui::bgcolor(to_color(group.color),
+                                          ftxui::text("[" + group.name + "]")));
+        else
+          result.push_back(ftxui::text("[" + group.name + "]"));
+        // TODO ugly spacing hack.
+        result.push_back(ftxui::text(" "));
+      }
+
+      result.push_back(ftxui::text(task.title));
+      return ftxui::hbox(result);
     }));
 
     if (!task_->description.empty()) {
@@ -615,6 +686,8 @@ struct column {
 };
 
 } // namespace gui
+
+void validate_color(std::string_view input) { gui::to_color(input); }
 
 ftxui::Element create_widget(const task &task) {
   ftxui::Elements result;
