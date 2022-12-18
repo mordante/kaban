@@ -15,12 +15,22 @@ set(CMAKE_CXX_EXTENSIONS NO)
 add_compile_options(-fexperimental-library)
 add_link_options(-fexperimental-library)
 
+set(PREBUILT_MODULE_PATH ${CMAKE_BINARY_DIR}/modules)
+file(MAKE_DIRECTORY ${PREBUILT_MODULE_PATH})
+add_compile_options(
+	-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
+)
+include(Modules)
+add_module(data)
+
 add_executable(kaban
 	kaban.cpp
 )
+
 target_link_libraries(kaban
 	PRIVATE
 		ftxui::screen
 		ftxui::dom
 		ftxui::component
+		${PREBUILT_MODULE_PATH}/data.pcm
 )
