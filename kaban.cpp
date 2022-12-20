@@ -560,6 +560,16 @@ Element multiline_text(const std::string &the_text) {
   return vbox(output);
 }
 
+// position x y is the end of the visible area
+Decorator xfocusPosition(int x) { return focusPosition(x, 0); }
+Decorator yfocusPosition(int y) { return focusPosition(0, y); }
+Decorator xfocusPositionRelative(float x) {
+  return focusPositionRelative(x, 0.0f);
+}
+Decorator yfocusPositionRelative(float y) {
+  return focusPositionRelative(0.0f, y);
+}
+
 } // namespace ftxui
 
 namespace gui {
@@ -774,6 +784,7 @@ int main(int argc, const char *argv[]) {
   bool enable_all = false;
   bool enable_refinement = false;
   std::array<bool, 5> enable_columns{false, false, true, true, true};
+  std::array<float, 5> position{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
   gui::column inactive_column{inactive};
   gui::column blocked_column{blocked};
@@ -782,6 +793,13 @@ int main(int argc, const char *argv[]) {
   gui::column review_column{review};
 
   ftxui::Component board = ftxui::Container::Vertical({
+
+      ftxui::Slider("Inactive   ", &position[0], 0.f, 1.f, 0.01f),
+      ftxui::Slider("Blocked    ", &position[1], 0.f, 1.f, 0.01f),
+      ftxui::Slider("Backlog    ", &position[2], 0.f, 1.f, 0.01f),
+      ftxui::Slider("In progress", &position[3], 0.f, 1.f, 0.01f),
+      ftxui::Slider("In review  ", &position[4], 0.f, 1.f, 0.01f),
+
       ftxui::Checkbox(std::format("All ({}/{})", tasks.size(), tasks.size()),
                       &enable_all),
       ftxui::Checkbox(
@@ -811,8 +829,12 @@ int main(int argc, const char *argv[]) {
               {ftxui::Renderer(inactive_column.widget,
                                [&] {
                                  return ftxui::window(
-                                     ftxui::text("Inactive"),
-                                     inactive_column.widget->Render());
+                                            ftxui::text("Inactive"),
+                                            inactive_column.widget->Render()) |
+                                        ftxui::vscroll_indicator |
+                                        ftxui::yfocusPositionRelative(
+                                            position[0]) |
+                                        ftxui::yframe;
                                })}) |
               ftxui::Maybe([&] {
                 return enable_all | enable_refinement | enable_columns[0];
@@ -823,7 +845,11 @@ int main(int argc, const char *argv[]) {
                                [&] {
                                  return ftxui::window(
                                      ftxui::text("Blocked"),
-                                     blocked_column.widget->Render());
+                                     blocked_column.widget->Render()      //
+                                         | ftxui::vscroll_indicator       //
+                                         | ftxui::yfocusPositionRelative( //
+                                               position[1])               //
+                                         | ftxui::yframe);
                                })}) |
               ftxui::Maybe([&] {
                 return enable_all | enable_refinement | enable_columns[1];
@@ -835,18 +861,27 @@ int main(int argc, const char *argv[]) {
                                [&] {
                                  return ftxui::window(
                                      ftxui::text("Backlog"),
-                                     backlog_column.widget->Render());
+                                     backlog_column.widget->Render()      //
+                                         | ftxui::vscroll_indicator       //
+                                         | ftxui::yfocusPositionRelative( //
+                                               position[2])               //
+                                         | ftxui::yframe);
                                })}) |
               ftxui::Maybe([&] {
                 return enable_all | enable_refinement | enable_columns[2];
               }),
+
           // Progress
           ftxui::Container::Vertical(
               {ftxui::Renderer(progress_column.widget,
                                [&] {
                                  return ftxui::window(
                                      ftxui::text("In progress"),
-                                     progress_column.widget->Render());
+                                     progress_column.widget->Render()     //
+                                         | ftxui::vscroll_indicator       //
+                                         | ftxui::yfocusPositionRelative( //
+                                               position[3])               //
+                                         | ftxui::yframe);
                                })}) |
               ftxui::Maybe([&] { return enable_all | enable_columns[3]; }),
           // Review
@@ -854,8 +889,12 @@ int main(int argc, const char *argv[]) {
               {ftxui::Renderer(review_column.widget,
                                [&] {
                                  return ftxui::window(
-                                     ftxui::text("In Review"),
-                                     (review_column.widget)->Render());
+                                            ftxui::text("In Review"),
+                                            (review_column.widget)->Render()) //
+                                        | ftxui::vscroll_indicator            //
+                                        | ftxui::yfocusPositionRelative(      //
+                                              position[4])                    //
+                                        | ftxui::yframe;
                                })}) |
               ftxui::Maybe([&] { return enable_all | enable_columns[4]; }) //
       })                                                                   //
