@@ -16,6 +16,7 @@ function(add_module name)
 			-std=c++2b
 			-stdlib=libc++
 			-fexperimental-library
+			-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
 			--precompile
 			${input}
 			-o ${output}

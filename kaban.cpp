@@ -7,6 +7,7 @@
 #include <array>
 #include <chrono>
 #include <cstdlib>
+#include <expected>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -323,7 +324,33 @@ ftxui::Element create_widget(const task &task) {
 int main(int argc, const char *argv[]) {
   char *home = std::getenv("HOME");
   std::ifstream file{home + std::string{"/kaban"}};
+#if 0
   parse(file);
+#else
+
+  std::string input{std::istreambuf_iterator<char>(file), {}};
+  std::expected<data::tstate *, data::tparse_error *> result =
+      data::parse(input);
+  if (!result) {
+    data::tparse_error &error = *result.error();
+    std::cerr << std::format(R"(Failed parsing
+{}:{}
+{}
+{}
+)",
+                             home + std::string{"/kaban"}, error.line_no,
+                             error.line, error.message);
+
+    return EXIT_FAILURE;
+  }
+
+  std::unique_ptr<data::tstate> state{*result};
+  labels = state->labels;
+  projects = state->projects;
+  groups = state->groups;
+  tasks = state->tasks;
+#endif
+
   std::cout << "Found " << tasks.size() << " tasks\n";
 
   std::vector<gui::ticket> inactive;

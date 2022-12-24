@@ -1,6 +1,22 @@
 include(FetchContent)
 
 FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        release-1.12.1
+)
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+  FetchContent_Populate(googletest)
+  set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+  add_subdirectory(
+	  ${googletest_SOURCE_DIR}
+	  ${googletest_BINARY_DIR}
+	  EXCLUDE_FROM_ALL
+  )
+endif()
+
+FetchContent_Declare(
   ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
   # v3.0.0 uses deprecated code, therefore use the latest master.

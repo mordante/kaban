@@ -34,3 +34,5 @@ target_link_libraries(kaban
 		ftxui::component
 		${PREBUILT_MODULE_PATH}/data.pcm
 )
+
+add_subdirectory(test)
