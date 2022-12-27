@@ -17,7 +17,7 @@ TEST(parser, empty) {
       data::parse(input);
 
   EXPECT_TRUE(result);
-  EXPECT_EQ(**result, data::tstate{});
+  expect_eq(**result, data::tstate{});
 }
 
 TEST(parser, empty_lines) {
@@ -32,7 +32,7 @@ TEST(parser, empty_lines) {
       data::parse(input);
 
   EXPECT_TRUE(result);
-  EXPECT_EQ(**result, data::tstate{});
+  expect_eq(**result, data::tstate{});
 }
 
 TEST(parser, unknown_header) {
