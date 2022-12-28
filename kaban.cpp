@@ -321,9 +321,6 @@ ftxui::Element create_widget(const task &task) {
 int main(int argc, const char *argv[]) {
   char *home = std::getenv("HOME");
   std::ifstream file{home + std::string{"/kaban"}};
-#if 0
-  parse(file);
-#else
 
   std::string input{std::istreambuf_iterator<char>(file), {}};
   std::expected<data::tstate *, data::tparse_error *> result =
@@ -347,7 +344,6 @@ int main(int argc, const char *argv[]) {
     groups = state->groups;
     tasks = state->tasks;
   }
-#endif
 
   std::cout << "Found " << tasks.size() << " tasks\n";
 
