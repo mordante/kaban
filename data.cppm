@@ -1,16 +1,10 @@
 module;
 #include <algorithm>
-#include <charconv>
-#include <chrono>
 #include <expected>
-#include <fstream> // REMOVE
-#include <memory>
-#include <span>
-#include <string>
-#include <string_view>
-#include <variant>
-#include <vector>
+
 export module data;
+
+import stl;
 
 // TODO DO NOT EXPORT
 export std::size_t parse_id(std::string_view input) {
@@ -435,6 +429,7 @@ private:
   }
 };
 
+#if 0
 // TODO DO NOT EXPORT
 export std::vector<project> projects;
 // TODO DO NOT EXPORT
@@ -476,7 +471,7 @@ export void parse(std::ifstream &file) {
     }
   }
 }
-
+#endif
 //////////////////////////////////////////////////////////////////////////////
 //                     V2
 //////////////////////////////////////////////////////////////////////////////
@@ -1381,7 +1376,7 @@ parse(std::string_view input) {
 
     switch (line->type) {
     case parser::tresult::eof:
-      return state;
+      return std::move(state);
 
     case parser::tresult::empty:
       /* DO NOTHING */
@@ -1403,7 +1398,7 @@ parse(std::string_view input) {
     }
   }
 
-  return state;
+  return std::move(state);
 }
 
 } // namespace hack
@@ -1426,7 +1421,8 @@ export namespace data {
  */
 [[nodiscard]] std::expected<tstate *, tparse_error *>
 parse(std::string_view input) {
-  auto result = hack::parse(input);
+  std::expected<std::unique_ptr<tstate>, tparse_error> result =
+      hack::parse(input);
 
   if (result)
     return result->release();

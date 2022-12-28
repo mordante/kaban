@@ -7,6 +7,7 @@ add_custom_command(
     OUTPUT ${PREBUILT_MODULE_PATH}/helpers.pcm
 	COMMAND
 		${CMAKE_CXX_COMPILER}
+		${CMAKE_CXX_FLAGS}
 		-std=c++2b
 		-stdlib=libc++
 		-fexperimental-library
@@ -34,10 +35,12 @@ add_executable(tests
 add_dependencies(tests
 	helpers
 	data
+	stl
 )
 target_link_libraries(tests
 	PRIVATE
 		gtest_main
 		${PREBUILT_MODULE_PATH}/data.pcm
 		${PREBUILT_MODULE_PATH}/helpers.pcm
+		${PREBUILT_MODULE_PATH}/stl.pcm
 )

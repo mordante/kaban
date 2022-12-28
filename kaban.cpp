@@ -3,23 +3,20 @@
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/screen/screen.hpp>
 
-#include <algorithm>
-#include <array>
-#include <chrono>
 #include <cstdlib>
 #include <expected>
-#include <format>
-#include <fstream>
 #include <iostream>
 #include <ranges>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
 
 #include <sstream> // multiline
 
 import data;
+import stl;
+
+std::vector<task> tasks;
+std::vector<project> projects;
+std::vector<group> groups;
+std::vector<label> labels;
 
 bool is_complete(task::tstatus status) {
   return status == task::tstatus::done || status == task::tstatus::discarded;
@@ -343,12 +340,13 @@ int main(int argc, const char *argv[]) {
 
     return EXIT_FAILURE;
   }
-
-  std::unique_ptr<data::tstate> state{*result};
-  labels = state->labels;
-  projects = state->projects;
-  groups = state->groups;
-  tasks = state->tasks;
+  {
+    std::unique_ptr<data::tstate> state{result.value()};
+    labels = state->labels;
+    projects = state->projects;
+    groups = state->groups;
+    tasks = state->tasks;
+  }
 #endif
 
   std::cout << "Found " << tasks.size() << " tasks\n";
