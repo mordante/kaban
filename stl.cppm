@@ -33,6 +33,7 @@ export {
 } // export
 
 export namespace std {
+using std::addressof;
 using std::array;
 using std::construct_at;
 using std::default_initializable;
@@ -64,9 +65,17 @@ using std::identity;
 namespace chrono {
 using std::chrono::day;
 using std::chrono::month;
+using std::chrono::operator!=;
+using std::chrono::operator<;
+using std::chrono::operator<=;
+using std::chrono::operator<=>;
+using std::chrono::operator==;
+using std::chrono::operator>;
+using std::chrono::operator>=;
+using std::chrono::sys_days;
+using std::chrono::system_clock;
 using std::chrono::year;
 using std::chrono::year_month_day;
-using std::chrono::operator==;
 } // namespace chrono
 namespace ranges {
 using std::ranges::begin;

@@ -13,113 +13,6 @@
 import data;
 import stl;
 
-bool is_complete(task::tstatus status) {
-  return status == task::tstatus::done || status == task::tstatus::discarded;
-}
-
-bool is_blocked(const task &task) {
-  std::vector<::task> &tasks = data::get_state().tasks;
-  for (auto id : task.dependencies) {
-    auto it = std::find_if(tasks.begin(), tasks.end(),
-                           [id](const auto &task) { return task.id == id; });
-    if (it == tasks.end())
-      throw 42;
-
-    if (!is_complete(it->status))
-      return true;
-  }
-  // TODO Validate requirements
-  if (task.after)
-    return std::chrono::system_clock::now() <=
-           static_cast<std::chrono::sys_days>(*task.after);
-  return false;
-}
-
-bool is_active(const task &task) {
-  std::vector<::task> &tasks = data::get_state().tasks;
-  if (task.project == 0)
-    return true;
-
-  std::vector<::project> &projects = data::get_state().projects;
-  auto it = std::find_if(
-      projects.begin(), projects.end(),
-      [id = task.project](const auto &project) { return project.id == id; });
-  if (it == projects.end())
-    throw 42;
-
-  return it->active;
-}
-
-std::string_view get_title(std::size_t id) {
-  std::vector<::task> &tasks = data::get_state().tasks;
-  auto it = std::find_if(tasks.begin(), tasks.end(),
-                         [id](const auto &task) { return task.id == id; });
-
-  if (it == tasks.end())
-    throw 42;
-
-  return it->title;
-}
-
-const project &get_project(std::size_t id) {
-  std::vector<::project> &projects = data::get_state().projects;
-  auto it =
-      std::find_if(projects.begin(), projects.end(),
-                   [id](const auto &project) { return project.id == id; });
-
-  if (it == projects.end())
-    throw 42;
-  return *it;
-}
-
-std::string_view get_project_name(std::size_t id) {
-  return get_project(id).name;
-}
-
-const label &get_label(std::size_t id) {
-  std::vector<::label> &labels = data::get_state().labels;
-  auto it = std::find_if(labels.begin(), labels.end(),
-                         [id](const auto &label) { return label.id == id; });
-
-  if (it == labels.end())
-    throw 42;
-  return *it;
-}
-
-const group &get_group(std::size_t id) {
-  std::vector<::group> &groups = data::get_state().groups;
-  auto it = std::find_if(groups.begin(), groups.end(),
-                         [id](const auto &group) { return group.id == id; });
-
-  if (it == groups.end())
-    throw 42;
-  return *it;
-}
-
-std::string_view get_group_name(std::size_t id) { return get_group(id).name; }
-
-void print(std::string_view title, const std::vector<task> &tasks) {
-  if (tasks.empty())
-    return;
-
-  std::cout << std::format("[{}]\n", title);
-  for (const auto &task : tasks) {
-    if (task.project)
-      std::cout << std::format("- {:3} [{}] {}\n", task.id,
-                               get_project_name(task.project), task.title);
-    else
-      std::cout << std::format("- {:3} {}\n", task.id, task.title);
-
-    if (!task.description.empty())
-      std::cout << std::format("      - {}\n", task.description);
-
-    if (!task.dependencies.empty())
-      for (auto id : task.dependencies)
-        std::cout << std::format("      x {:3} {}\n", id, get_title(id));
-  }
-  std::cout << '\n';
-}
-
 namespace ftxui {
 
 Element multiline_text(const std::string &the_text) {
@@ -194,15 +87,15 @@ struct ticket {
       result.push_back(ftxui::text(std::format("{:3} ", task.id)));
 
       if (size_t project_id =
-              task.group ? get_group(task.group).project : task.project;
+              task.group ? data::get_group(task.group).project : task.project;
           project_id) {
 
-        const project &project = get_project(project_id);
+        const project &project = data::get_project(project_id);
         result.push_back(create_label(project.name, project.color));
       }
 
       if (task.group) {
-        const group &group = get_group(task.group);
+        const group &group = data::get_group(task.group);
         result.push_back(create_label(group.name, group.color));
       }
 
@@ -215,7 +108,7 @@ struct ticket {
 
       ftxui::Elements labels;
       for (auto &id : task.labels) {
-        const label &label = get_label(id);
+        const label &label = data::get_label(id);
         labels.push_back(create_label(label.name, label.color));
       }
 
@@ -235,7 +128,7 @@ struct ticket {
       ftxui::Elements blockers;
       for (auto id : task.dependencies)
         blockers.push_back(
-            ftxui::text(std::format("{:3} {}", id, get_title(id))));
+            ftxui::text(std::format("{:3} {}", id, data::get_task(id).title)));
 
       result.push_back(ftxui::Renderer([=] {
         return ftxui::window(ftxui::text("Dependencies"),
@@ -247,7 +140,7 @@ struct ticket {
       ftxui::Elements blockers;
       for (auto id : task.requirements)
         blockers.push_back(
-            ftxui::text(std::format("{:3} {}", id, get_group_name(id))));
+            ftxui::text(std::format("{:3} {}", id, data::get_group(id).name)));
 
       result.push_back(ftxui::Renderer([=] {
         return ftxui::window(ftxui::text("Requirements"),
@@ -298,9 +191,10 @@ ftxui::Element create_widget(const task &task) {
   ftxui::Elements result;
 
   result.push_back(ftxui::text(
-      task.project ? std::format("{:3} [{}] {}", task.id,
-                                 get_project_name(task.project), task.title)
-                   : std::format("{:3} {}", task.id, task.title)));
+      task.project
+          ? std::format("{:3} [{}] {}", task.id,
+                        data::get_project(task.project).name, task.title)
+          : std::format("{:3} {}", task.id, task.title)));
 
   if (!task.description.empty()) {
     if (task.status == task::tstatus::progress)
@@ -311,7 +205,7 @@ ftxui::Element create_widget(const task &task) {
     ftxui::Elements blockers;
     for (auto id : task.dependencies)
       blockers.push_back(
-          ftxui::text(std::format("{:3} {}", id, get_title(id))));
+          ftxui::text(std::format("{:3} {}", id, data::get_task(id).title)));
 
     result.push_back(
         ftxui::window(ftxui::text("Blockers"), ftxui::vbox(blockers)));
@@ -339,7 +233,8 @@ int main(int argc, const char *argv[]) {
 
     return EXIT_FAILURE;
   }
-  data::set_state(std::unique_ptr<data::tstate>{result.value()});
+  //data::set_state(std::unique_ptr<data::tstate>{result.value()});
+  data::set_state(result.value());
   std::vector<::task> &tasks = data::get_state().tasks;
   std::vector<::group> &groups = data::get_state().groups;
   std::vector<::label> &labels = data::get_state().labels;
@@ -360,9 +255,9 @@ int main(int argc, const char *argv[]) {
   review.reserve(tasks.size());
   for (const auto &task : tasks) {
     if (task.status == task::tstatus::backlog) {
-      if (is_blocked(task))
+      if (data::is_blocked(task))
         blocked.emplace_back(task);
-      else if (!is_active(task))
+      else if (!data::is_active(task))
         inactive.emplace_back(task);
       else
         backlog.emplace_back(task);

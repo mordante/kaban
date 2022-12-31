@@ -21,6 +21,9 @@ add_compile_options(
 	-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
 )
 
+add_library(state state.cpp)
+add_dependencies(state data stl)
+
 add_custom_command(
 	OUTPUT ${PREBUILT_MODULE_PATH}/stl.pcm
 	COMMAND
@@ -57,6 +60,7 @@ add_custom_command(
 	DEPENDS
 		${PREBUILT_MODULE_PATH}/stl.pcm
 		${CMAKE_CURRENT_SOURCE_DIR}/data.cppm
+		${CMAKE_CURRENT_SOURCE_DIR}/state.cpp
 )
 add_custom_target(data
 	DEPENDS
@@ -72,6 +76,7 @@ target_link_libraries(kaban
 		ftxui::component
 		${PREBUILT_MODULE_PATH}/data.pcm
 		${PREBUILT_MODULE_PATH}/stl.pcm
+		state
 )
 
 add_subdirectory(test)

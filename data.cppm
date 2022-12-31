@@ -1,10 +1,11 @@
 module;
+#include "state.hpp"
 #include <algorithm>
 #include <expected>
 
 export module data;
-
 import stl;
+
 export struct label {
   std::size_t id;
   std::string name;
@@ -53,38 +54,6 @@ export struct task {
   std::vector<std::size_t> requirements;
 };
 
-template <std::default_initializable T> class tsingleton {
-public:
-  tsingleton() = default;
-  ~tsingleton() = default;
-  tsingleton(const tsingleton &) = delete;
-  tsingleton(tsingleton &&) = delete;
-  tsingleton &operator=(const tsingleton &) = delete;
-  tsingleton &operator=(tsingleton &&) = delete;
-
-  // TODO use this version, but there are memory issues when doing so.
-#if 0
-  [[nodiscard]] std::expected<void, nullptr_t> set(std::unique_ptr<T> &&data) {
-    if (!data)
-      return std::unexpected(nullptr);
-    data_ = std::move(data);
-    return {};
-  }
-#else
-  void set(std::unique_ptr<T> &&data) {
-    if (!data)
-      throw 42;
-    data_ = std::move(data);
-  }
-#endif
-  // TODO use deducing this.
-  [[nodiscard]] T &get() { return *data_; }
-  [[nodiscard]] const T &get() const { return *data_; }
-
-private:
-  std::unique_ptr<T> data_{std::make_unique<T>()};
-};
-
 export namespace data {
 struct tstate {
   std::vector<label> labels;
@@ -101,16 +70,68 @@ struct tparse_error {
 
 } // namespace data
 
-static tsingleton<data::tstate> state_singleton;
 export namespace data {
-
-[[nodiscard]] tstate &get_state() { return state_singleton.get(); }
+[[nodiscard]] tstate &get_state() {
+  return *static_cast<data::tstate *>(::get_state());
+}
 
 // TODO use this version, but there are memory issues when doing so.
 //[[nodiscard]] std::expected<void, nullptr_t>
-void set_state(std::unique_ptr<data::tstate> &&state) {
-  return state_singleton.set(std::move(state));
+// void set_state(std::unique_ptr<data::tstate> &&state) {
+//  return state_singleton.set(std::move(state));
+void set_state(data::tstate *state) { ::set_state(state); }
+} // namespace data
+
+bool is_complete(const task &task) {
+  return task.status == task::tstatus::done ||
+         task.status == task::tstatus::discarded;
 }
+
+template <class T>
+const T &get_record(const std::vector<T> &range, std::size_t id) {
+  auto it = std::ranges::find(range, id, &T::id);
+  if (it == range.end())
+    throw 42;
+  return *it;
+}
+
+export namespace data {
+const label &get_label(std::size_t id) {
+  return get_record(data::get_state().labels, id);
+}
+
+const project &get_project(std::size_t id) {
+  return get_record(data::get_state().projects, id);
+}
+
+const group &get_group(std::size_t id) {
+  return get_record(data::get_state().groups, id);
+}
+
+const task &get_task(std::size_t id) {
+  return get_record(data::get_state().tasks, id);
+}
+
+bool is_blocked(const task &task) {
+  if (std::ranges::any_of(task.dependencies, [](std::size_t id) {
+        return !is_complete(get_task(id));
+      }))
+    return true;
+
+  if (!task.after)
+    return false;
+
+  return std::chrono::system_clock::now() <=
+         static_cast<std::chrono::sys_days>(*task.after);
+}
+
+bool is_active(const task &task) {
+  if (task.project == 0)
+    return true;
+
+  return get_project(task.project).active;
+}
+
 } // namespace data
 
 class parser {

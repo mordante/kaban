@@ -1,5 +1,4 @@
 
-
 # Due to the external library include this can't use the function.
 # TODO solve this by allowing additional commands or switch to newer
 # CMake once available.
@@ -31,10 +30,12 @@ add_executable(tests
 	data/parse_label.cpp
 	data/parse_project.cpp
 	data/parse_task.cpp
+	data/status.cpp
 )
 add_dependencies(tests
 	helpers
 	data
+	state
 	stl
 )
 target_link_libraries(tests
@@ -43,4 +44,5 @@ target_link_libraries(tests
 		${PREBUILT_MODULE_PATH}/data.pcm
 		${PREBUILT_MODULE_PATH}/helpers.pcm
 		${PREBUILT_MODULE_PATH}/stl.pcm
+		state
 )
