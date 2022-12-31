@@ -13,16 +13,12 @@
 import data;
 import stl;
 
-std::vector<task> tasks;
-std::vector<project> projects;
-std::vector<group> groups;
-std::vector<label> labels;
-
 bool is_complete(task::tstatus status) {
   return status == task::tstatus::done || status == task::tstatus::discarded;
 }
 
 bool is_blocked(const task &task) {
+  std::vector<::task> &tasks = data::get_state().tasks;
   for (auto id : task.dependencies) {
     auto it = std::find_if(tasks.begin(), tasks.end(),
                            [id](const auto &task) { return task.id == id; });
@@ -40,9 +36,11 @@ bool is_blocked(const task &task) {
 }
 
 bool is_active(const task &task) {
+  std::vector<::task> &tasks = data::get_state().tasks;
   if (task.project == 0)
     return true;
 
+  std::vector<::project> &projects = data::get_state().projects;
   auto it = std::find_if(
       projects.begin(), projects.end(),
       [id = task.project](const auto &project) { return project.id == id; });
@@ -53,6 +51,7 @@ bool is_active(const task &task) {
 }
 
 std::string_view get_title(std::size_t id) {
+  std::vector<::task> &tasks = data::get_state().tasks;
   auto it = std::find_if(tasks.begin(), tasks.end(),
                          [id](const auto &task) { return task.id == id; });
 
@@ -63,6 +62,7 @@ std::string_view get_title(std::size_t id) {
 }
 
 const project &get_project(std::size_t id) {
+  std::vector<::project> &projects = data::get_state().projects;
   auto it =
       std::find_if(projects.begin(), projects.end(),
                    [id](const auto &project) { return project.id == id; });
@@ -77,6 +77,7 @@ std::string_view get_project_name(std::size_t id) {
 }
 
 const label &get_label(std::size_t id) {
+  std::vector<::label> &labels = data::get_state().labels;
   auto it = std::find_if(labels.begin(), labels.end(),
                          [id](const auto &label) { return label.id == id; });
 
@@ -86,6 +87,7 @@ const label &get_label(std::size_t id) {
 }
 
 const group &get_group(std::size_t id) {
+  std::vector<::group> &groups = data::get_state().groups;
   auto it = std::find_if(groups.begin(), groups.end(),
                          [id](const auto &group) { return group.id == id; });
 
@@ -337,13 +339,11 @@ int main(int argc, const char *argv[]) {
 
     return EXIT_FAILURE;
   }
-  {
-    std::unique_ptr<data::tstate> state{result.value()};
-    labels = state->labels;
-    projects = state->projects;
-    groups = state->groups;
-    tasks = state->tasks;
-  }
+  data::set_state(std::unique_ptr<data::tstate>{result.value()});
+  std::vector<::task> &tasks = data::get_state().tasks;
+  std::vector<::group> &groups = data::get_state().groups;
+  std::vector<::label> &labels = data::get_state().labels;
+  std::vector<::project> &projects = data::get_state().projects;
 
   std::cout << "Found " << tasks.size() << " tasks\n";
 

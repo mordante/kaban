@@ -11,6 +11,7 @@ module;
 #include <algorithm>
 #include <charconv>
 #include <chrono>
+#include <concepts>
 #include <format>
 #include <fstream>
 #include <memory>
@@ -34,6 +35,7 @@ export {
 export namespace std {
 using std::array;
 using std::construct_at;
+using std::default_initializable;
 using std::errc;
 using std::find;
 using std::format;

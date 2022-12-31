@@ -53,6 +53,38 @@ export struct task {
   std::vector<std::size_t> requirements;
 };
 
+template <std::default_initializable T> class tsingleton {
+public:
+  tsingleton() = default;
+  ~tsingleton() = default;
+  tsingleton(const tsingleton &) = delete;
+  tsingleton(tsingleton &&) = delete;
+  tsingleton &operator=(const tsingleton &) = delete;
+  tsingleton &operator=(tsingleton &&) = delete;
+
+  // TODO use this version, but there are memory issues when doing so.
+#if 0
+  [[nodiscard]] std::expected<void, nullptr_t> set(std::unique_ptr<T> &&data) {
+    if (!data)
+      return std::unexpected(nullptr);
+    data_ = std::move(data);
+    return {};
+  }
+#else
+  void set(std::unique_ptr<T> &&data) {
+    if (!data)
+      throw 42;
+    data_ = std::move(data);
+  }
+#endif
+  // TODO use deducing this.
+  [[nodiscard]] T &get() { return *data_; }
+  [[nodiscard]] const T &get() const { return *data_; }
+
+private:
+  std::unique_ptr<T> data_{std::make_unique<T>()};
+};
+
 export namespace data {
 struct tstate {
   std::vector<label> labels;
@@ -67,6 +99,18 @@ struct tparse_error {
   std::string message;
 };
 
+} // namespace data
+
+static tsingleton<data::tstate> state_singleton;
+export namespace data {
+
+[[nodiscard]] tstate &get_state() { return state_singleton.get(); }
+
+// TODO use this version, but there are memory issues when doing so.
+//[[nodiscard]] std::expected<void, nullptr_t>
+void set_state(std::unique_ptr<data::tstate> &&state) {
+  return state_singleton.set(std::move(state));
+}
 } // namespace data
 
 class parser {
