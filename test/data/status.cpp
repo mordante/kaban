@@ -116,15 +116,14 @@ bool is_active_group(bool project_active, bool group_active) {
           .projects = {project{.id = 1, .name = "a", .active = project_active}},
           .groups = {group{
               .id = 1, .project = 1, .name = "a", .active = group_active}},
-          .tasks = {task{.id = 1, .project = 1, .title = "a"}}});
+          .tasks = {task{.id = 1, .group = 1, .title = "a"}}});
 
   return data::is_active(data::get_task(1));
 }
 
 TEST(status, is_active_group) {
   EXPECT_TRUE(is_active_group(true, true));
-  // TODO should be false
-  EXPECT_TRUE(is_active_group(true, false));
+  EXPECT_FALSE(is_active_group(true, false));
   EXPECT_FALSE(is_active_group(false, true));
   EXPECT_FALSE(is_active_group(false, false));
 }

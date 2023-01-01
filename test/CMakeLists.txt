@@ -7,6 +7,7 @@ add_custom_command(
 	COMMAND
 		${CMAKE_CXX_COMPILER}
 		${CMAKE_CXX_FLAGS}
+		-O0 -g
 		-std=c++2b
 		-stdlib=libc++
 		-fexperimental-library

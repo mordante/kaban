@@ -126,10 +126,14 @@ bool is_blocked(const task &task) {
 }
 
 bool is_active(const task &task) {
-  if (task.project == 0)
+  if (task.project != 0)
+    return get_project(task.project).active;
+
+  if (task.group == 0)
     return true;
 
-  return get_project(task.project).active;
+  group group = get_group(task.group);
+  return group.active && get_project(group.project).active;
 }
 
 } // namespace data
