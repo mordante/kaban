@@ -1,6 +1,5 @@
 module;
 #include <algorithm>
-#include <expected>
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
@@ -9,47 +8,6 @@ module;
 export module gui;
 import data;
 import stl;
-
-export namespace gui {
-enum class tcolumn {
-  inactive = 0,
-  blocked,
-  backlog,
-  selected,
-  progress,
-  review,
-  done,
-  discarded
-};
-
-tcolumn get_column(const task &task) {
-  switch (task.status) {
-  case task::tstatus::backlog:
-    if (!data::is_active(task))
-      return tcolumn::inactive;
-
-    if (data::is_blocked(task))
-      return tcolumn::blocked;
-
-    return tcolumn::backlog;
-
-  case task::tstatus::selected:
-    return tcolumn::selected;
-
-  case task::tstatus::progress:
-    return tcolumn::progress;
-
-  case task::tstatus::review:
-    return tcolumn::review;
-
-  case task::tstatus::done:
-    return tcolumn::done;
-
-  case task::tstatus::discarded:
-    return tcolumn::discarded;
-  }
-}
-} // namespace gui
 
 ftxui::Color to_color(std::string_view input) {
   if (input == "RED")
@@ -90,7 +48,7 @@ ftxui::Element multiline_text(const std::string &the_text) {
   return ftxui::vbox(output);
 }
 
-ftxui::Element create_labelX(std::string text, std::string_view color) {
+ftxui::Element create_label(std::string text, std::string_view color) {
   text = "[" + text + "]";
   if (color.empty())
     return ftxui::text(text);
@@ -108,12 +66,12 @@ ftxui::Component create_title(const task *task) {
         project_id) {
 
       const project &project = data::get_project(project_id);
-      result.push_back(create_labelX(project.name, project.color));
+      result.push_back(create_label(project.name, project.color));
     }
 
     if (task->group) {
       const group &group = data::get_group(task->group);
-      result.push_back(create_labelX(group.name, group.color));
+      result.push_back(create_label(group.name, group.color));
     }
 
     // TODO ugly spacing hack.
@@ -126,7 +84,7 @@ ftxui::Component create_title(const task *task) {
     ftxui::Elements labels;
     for (auto &id : task->labels) {
       const label &label = data::get_label(id);
-      labels.push_back(create_labelX(label.name, label.color));
+      labels.push_back(create_label(label.name, label.color));
     }
 
     return ftxui::vbox(ftxui::hflow(result), ftxui::hflow(labels));
@@ -207,53 +165,252 @@ ftxui::Components create_tickets(const std::vector<const task *> &tasks) {
   return result;
 }
 
-export namespace gui {
+enum tcolumn_index {
+  inactive = 0,
+  blocked,
+  backlog,
+  selected,
+  progress,
+  review,
+  done,
+  discarded
+};
 
-class tfoo final : public ftxui::ComponentBase {
-public:
-  explicit tfoo(const std::string_view title, std::function<bool()> visible,
-                float *scrollbar)
-      : title_(ftxui::text(std::string(title))), visible_(visible),
-        scrollbar_(scrollbar) {}
+constexpr std::size_t column_count = 8;
 
-  void add(const task &task) {
-    tasks_.push_back(std::addressof(task));
-    dirty_ = true;
+constexpr std::array<std::string_view, column_count> column_names = {
+    "Inactive",    "Blocked",   "Backlog", "Selected",
+    "In progress", "In review", "Done",    "Discarded"};
+
+tcolumn_index get_column_index(const task &task) {
+  switch (task.status) {
+  case task::tstatus::backlog:
+    if (!data::is_active(task))
+      return inactive;
+
+    if (data::is_blocked(task))
+      return blocked;
+
+    return backlog;
+
+  case task::tstatus::selected:
+    return selected;
+
+  case task::tstatus::progress:
+    return progress;
+
+  case task::tstatus::review:
+    return review;
+
+  case task::tstatus::done:
+    return done;
+
+  case task::tstatus::discarded:
+    return discarded;
   }
+}
+
+class tboard final : public ftxui::ComponentBase {
+public:
+  tboard() { load_tasks(); }
 
   ftxui::Element Render() override {
-    if (dirty_ && !tasks_.empty()) {
-      widget_ = ftxui::Container::Vertical(create_tickets(tasks_));
-      dirty_ = false;
-    }
-    return (ftxui::Renderer([&] {
-              return ftxui::window(title_,
-                                   tasks_.empty() ? ftxui::filler()
-                                                  : widget_->Render()) //
-                     | ftxui::vscroll_indicator                        //
-                     | ftxui::focusPositionRelative(0, *scrollbar_)    //
-                     | ftxui::yframe                                   //
-                     | ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 19);
-            }) //
-            | ftxui::Maybe(visible_))
-        ->Render();
-  }
 
-  bool OnEvent(ftxui::Event event) override {
-    if (tasks_.empty())
-      return false;
-    return widget_->OnEvent(event);
-  }
+    // Note this function "digs up" the elements from the internal container.
+    // This gives a lot of hard-coded magic numbers. This should be improved.
 
-  bool Focusable() const override { return true; }
+    ftxui::Elements columns;
+    for (std::size_t i = 0; i < column_count; ++i)
+      if (column_visibility_[i]())
+        columns.emplace_back(ftxui::window(
+            ftxui::text(std::string(column_names[i])),
+            ChildAt(0)->ChildAt(1)
+                        ->ChildAt(i)
+                        ->ChildAt(0) // maybe
+                        ->ChildAt(0) // maximum width
+                        ->ChildAt(0) // minimum width
+                        ->ChildCount() == 0
+                ? ftxui::filler() | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 20)
+                : ChildAt(0)->ChildAt(1)->ChildAt(i)->Render()));
+
+    return ftxui::vbox({
+        ChildAt(0)->ChildAt(0)->ChildAt(0)->Render(),
+        ftxui::hflow({
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(0)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(1)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(2)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(3)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(4)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(5)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(6)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(7)->Render(),
+        }),
+        ftxui::hbox(columns),
+    });
+  }
 
 private:
-  ftxui::Element title_;
-  std::function<bool()> visible_;
-  float *scrollbar_;
-  std::vector<const task *> tasks_;
+  void load_tasks() {
+    std::array<std::vector<ftxui::Component>, column_count> columns;
+    // Creates a ticket for every task and stores the shared pointer in two
+    // places:
+    // - tickets_ as a ticket
+    // - columns as a component, this will be used further in this function.
+    for (const auto &task : data::get_state().tasks)
+      columns[get_column_index(task)].emplace_back(tickets_.emplace_back(
+          std::make_shared<tticket>(std::addressof(task))));
+
+    Add(ftxui::Container::Vertical(
+        {create_column_buttons(columns), create_columns(columns)}));
+  }
+
+  ftxui::Component create_column_buttons(
+      const std::array<ftxui::Components, column_count> &columns) {
+
+    ftxui::Components column_buttons;
+    for (int i = 0; i < column_count; ++i) // zip view
+      column_buttons.emplace_back(
+          ftxui::Checkbox(std::format("{} ({}/{}))", column_names[i],
+                                      columns[i].size(), tickets_.size()),
+                          std::addressof(visible_[i])));
+
+    return ftxui::Container::Vertical({
+        ftxui::Container::Horizontal({
+            ftxui::Checkbox(
+                std::format("All ({}/{})", tickets_.size(), tickets_.size()),
+                std::addressof(all_visible_)),
+            ftxui::Checkbox(
+                std::format("Refinement ({}/{})",
+                            std::accumulate(
+                                columns.begin(), columns.begin() + progress, 0,
+                                [](size_t init, const auto &column) {
+                                  return init + column.size();
+                                }),
+                            tickets_.size()),
+                std::addressof(refinement_visible_))   //
+        }),                                            //
+        ftxui::Container::Horizontal({column_buttons}) //
+    });                                                //
+  }
+
+  ftxui::Component
+  create_columns(std::array<ftxui::Components, column_count> tickets) {
+    ftxui::Components columns;
+    for (int i = 0; i < column_count; ++i) // zip view
+      columns.emplace_back(
+          ftxui::Container::Vertical({std::move(tickets[i])})  //
+          | ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 19) //
+          | ftxui::size(ftxui::WIDTH, ftxui::LESS_THAN, 67)    //
+          | ftxui::Maybe(column_visibility_[i])                //
+      );
+
+    return ftxui::Container::Horizontal({columns});
+  }
+
+  std::vector<std::shared_ptr<tticket>> tickets_;
+
   bool dirty_{true};
-  ftxui::Component widget_;
+
+  bool all_visible_{false};
+  bool refinement_visible_{false};
+  std::array<bool, column_count> visible_{false, false, true,  true,
+                                          true,  true,  false, false};
+
+  std::array<std::function<bool()>, column_count> column_visibility_{
+      [&] { return all_visible_ | refinement_visible_ | visible_[0]; },
+      [&] { return all_visible_ | refinement_visible_ | visible_[1]; },
+      [&] { return all_visible_ | refinement_visible_ | visible_[2]; },
+      [&] { return all_visible_ | refinement_visible_ | visible_[3]; },
+      [&] { return all_visible_ | visible_[4]; },
+      [&] { return all_visible_ | visible_[5]; },
+      [&] { return all_visible_ | visible_[6]; },
+      [&] { return all_visible_ | visible_[7]; },
+  };
 };
+
+class tlabel final : public ftxui::ComponentBase {
+public:
+  explicit tlabel(const label *label) {
+    Add(ftxui::Renderer([=] {
+      ftxui::Elements elements;
+      elements.emplace_back(ftxui::text(std::format("{:3} ", label->id)));
+      elements.emplace_back(ftxui::text((label->name)));
+      if (!label->description.empty())
+        elements.emplace_back(ftxui::text(label->description) | ftxui::border);
+      if (!label->color.empty())
+        ftxui::bgcolor(to_color(label->color), ftxui::text(label->color));
+      return ftxui::vbox({elements});
+    }));
+  }
+};
+
+class tconfiguration final : public ftxui::ComponentBase {
+public:
+  tconfiguration() { load_configuration(); }
+
+  ftxui::Element Render() override {
+    ftxui::Elements columns;
+    if (!labels_.empty())
+      columns.emplace_back(
+          ftxui::window(ftxui::text("Labels"), ftxui::vbox(labels_)) |
+          ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 19) |
+          ftxui::size(ftxui::WIDTH, ftxui::LESS_THAN, 67));
+
+    return ftxui::hbox(columns);
+
+#if 0
+    // Note this function "digs up" the elements from the internal container.
+    // This gives a lot of hard-coded magic numbers. This should be improved.
+
+    ftxui::Elements columns;
+    for (std::size_t i = 0; i < column_count; ++i)
+      if (column_visibility_[i]())
+        columns.emplace_back(ftxui::window(
+            ftxui::text(std::string(column_names[i])),
+            ChildAt(0)->ChildAt(1)
+                        ->ChildAt(i)
+                        ->ChildAt(0) // maybe
+                        ->ChildAt(0) // maximum width
+                        ->ChildAt(0) // minimum width
+                        ->ChildCount() == 0
+                ? ftxui::filler() | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 20)
+                : ChildAt(0)->ChildAt(1)->ChildAt(i)->Render()));
+
+    return ftxui::vbox({
+        ChildAt(0)->ChildAt(0)->ChildAt(0)->Render(),
+        ftxui::hflow({
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(0)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(1)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(2)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(3)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(4)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(5)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(6)->Render(),
+            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(7)->Render(),
+        }),
+        ftxui::hbox(columns),
+    });
+#endif
+  }
+
+private:
+  void load_configuration() {
+    ftxui::Components labels;
+    for (const auto &label : data::get_state().labels)
+      labels.emplace_back(labels_.emplace_back(
+          std::make_shared<tlabel>(std::addressof(label))));
+
+    Add(ftxui::Container::Horizontal({
+        ftxui::Container::Vertical(std::move(labels)),
+    }));
+  }
+
+  std::vector<std::shared_ptr<tlabel>> labels_;
+};
+
+export namespace gui {
+
+ftxui::Component board() { return std::make_shared<tboard>(); }
+ftxui::Component configuration() { return std::make_shared<tconfiguration>(); }
 
 } // namespace gui

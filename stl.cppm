@@ -16,6 +16,7 @@ module;
 #include <fstream>
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <optional>
 #include <span>
 #include <string>
@@ -34,6 +35,7 @@ export {
 } // export
 
 export namespace std {
+using std::accumulate;
 using std::addressof;
 using std::allocate_shared;
 using std::allocator_traits;
