@@ -9,35 +9,6 @@ export module gui;
 import data;
 import stl;
 
-ftxui::Color to_color(std::string_view input) {
-  if (input == "RED")
-    return ftxui::Color::Red;
-  if (input == "GREEN")
-    return ftxui::Color::Green;
-  if (input == "YELLOW")
-    return ftxui::Color::Yellow;
-  if (input == "BLUE")
-    return ftxui::Color::Blue;
-  if (input == "MAGENTA")
-    return ftxui::Color::Magenta;
-  if (input == "CYAN")
-    return ftxui::Color::Cyan;
-  if (input == "red")
-    return ftxui::Color::RedLight;
-  if (input == "green")
-    return ftxui::Color::GreenLight;
-  if (input == "yellow")
-    return ftxui::Color::YellowLight;
-  if (input == "blue")
-    return ftxui::Color::BlueLight;
-  if (input == "magenta")
-    return ftxui::Color::MagentaLight;
-  if (input == "cyan")
-    return ftxui::Color::CyanLight;
-
-  throw 42;
-}
-
 ftxui::Element multiline_text(const std::string &the_text) {
   ftxui::Elements output;
   std::stringstream ss(the_text);
@@ -48,12 +19,52 @@ ftxui::Element multiline_text(const std::string &the_text) {
   return ftxui::vbox(output);
 }
 
-ftxui::Element create_label(std::string text, std::string_view color) {
-  text = "[" + text + "]";
-  if (color.empty())
-    return ftxui::text(text);
+// TODO Tune foreground colours further.
+ftxui::Element create_text(std::string text, data::tcolor color) {
+  ftxui::Element result = ftxui::text(text);
+  switch (color) {
+  case data::tcolor::black:
+    return result;
+  case data::tcolor::red:
+    return result | ftxui::bgcolor(ftxui::Color::Red) |
+           ftxui::color(ftxui::Color::Black);
+  case data::tcolor::green:
+    return result | ftxui::bgcolor(ftxui::Color::Green) |
+           ftxui::color(ftxui::Color::Black);
+  case data::tcolor::yellow:
+    return result | ftxui::bgcolor(ftxui::Color::Yellow);
+  case data::tcolor::blue:
+    return result | ftxui::bgcolor(ftxui::Color::Blue);
+  case data::tcolor::magenta:
+    return result | ftxui::bgcolor(ftxui::Color::Magenta);
+  case data::tcolor::cyan:
+    return result | ftxui::bgcolor(ftxui::Color::Cyan) |
+           ftxui::color(ftxui::Color::Black);
+  case data::tcolor::light_gray:
+    return result | ftxui::bgcolor(ftxui::Color::GrayLight);
+  case data::tcolor::dark_gray:
+    return result | ftxui::bgcolor(ftxui::Color::GrayDark);
+  case data::tcolor::light_red:
+    return result | ftxui::bgcolor(ftxui::Color::RedLight);
+  case data::tcolor::light_green:
+    return result | ftxui::bgcolor(ftxui::Color::GreenLight) |
+           ftxui::color(ftxui::Color::Black);
+  case data::tcolor::light_yellow:
+    return result | ftxui::bgcolor(ftxui::Color::YellowLight);
+  case data::tcolor::light_blue:
+    return result | ftxui::bgcolor(ftxui::Color::BlueLight);
+  case data::tcolor::light_magenta:
+    return result | ftxui::bgcolor(ftxui::Color::MagentaLight);
+  case data::tcolor::light_cyan:
+    return result | ftxui::bgcolor(ftxui::Color::CyanLight);
+  case data::tcolor::white:
+    return result | ftxui::bgcolor(ftxui::Color::White) |
+           ftxui::color(ftxui::Color::Black);
+  }
+}
 
-  return ftxui::bgcolor(to_color(color), ftxui::text(text));
+ftxui::Element create_label(std::string text, data::tcolor color) {
+  return create_text("[" + text + "]", color);
 }
 
 ftxui::Component create_title(const data::ttask *task) {
@@ -331,11 +342,9 @@ public:
     Add(ftxui::Renderer([=] {
       ftxui::Elements elements;
       elements.emplace_back(ftxui::text(std::format("{:3} ", label->id)));
-      elements.emplace_back(ftxui::text((label->name)));
+      elements.emplace_back(create_text(label->name, label->color));
       if (!label->description.empty())
         elements.emplace_back(ftxui::text(label->description) | ftxui::border);
-      if (!label->color.empty())
-        ftxui::bgcolor(to_color(label->color), ftxui::text(label->color));
       return ftxui::vbox({elements});
     }));
   }

@@ -7,11 +7,30 @@ export module data;
 import stl;
 
 export namespace data {
+enum class tcolor {
+  black,
+  red,
+  green,
+  yellow,
+  blue,
+  magenta,
+  cyan,
+  light_gray,
+  dark_gray,
+  light_red,
+  light_green,
+  light_yellow,
+  light_blue,
+  light_magenta,
+  light_cyan,
+  white,
+};
+
 struct tproject {
   std::size_t id;
   std::string name;
   std::string description;
-  std::string color;
+  tcolor color;
   bool active{true};
 };
 
@@ -20,7 +39,7 @@ struct tgroup {
   std::size_t project{0};
   std::string name;
   std::string description;
-  std::string color;
+  tcolor color;
   bool active{true};
 };
 
@@ -51,7 +70,7 @@ struct tlabel {
   std::size_t id;
   std::string name;
   std::string description;
-  std::string color;
+  tcolor color;
 };
 
 struct tstate {
@@ -280,7 +299,7 @@ struct tstring {
 };
 
 struct tcolor {
-  std::optional<std::string> value;
+  std::optional<data::tcolor> value;
 };
 
 struct tboolean {
@@ -372,7 +391,18 @@ parse_color(tfield &field, std::string_view input, int line_no) {
         std::format("an empty string is not a valid value for mandatory color "
                     "field »{}«",
                     field.name)};
-  color.value = input;
+
+  constexpr std::array<std::string_view, 16> color_names{
+      "black", "RED", "GREEN", "YELLOW", "BLUE", "MAGENTA", "CYAN", "gray",
+      "GRAY",  "red", "green", "yellow", "blue", "magenta", "cyan", "white"};
+
+  auto iter = std::ranges::find(color_names, input);
+  if (iter == color_names.end())
+    return std::optional<data::tparse_error>{
+        std::in_place, line_no, input,
+        std::format("invalid color value for field »{}«", field.name)};
+
+  color.value = static_cast<data::tcolor>(iter - color_names.begin());
   return {};
 }
 
@@ -858,7 +888,7 @@ std::optional<data::tparse_error> parse_label(data::tstate &state,
       std::get<tid>(record[0].value).value.value(),
       std::get<tstring>(record[1].value).value.value(),
       std::get<tstring>(record[2].value).value.value_or(""),
-      std::get<tcolor>(record[3].value).value.value_or(""));
+      std::get<tcolor>(record[3].value).value.value_or(data::tcolor::black));
 
   return {};
 }
@@ -886,7 +916,7 @@ std::optional<data::tparse_error> parse_project(data::tstate &state,
       std::get<tid>(record[0].value).value.value(),
       std::get<tstring>(record[1].value).value.value(),
       std::get<tstring>(record[2].value).value.value_or(""),
-      std::get<tcolor>(record[3].value).value.value_or(""),
+      std::get<tcolor>(record[3].value).value.value_or(data::tcolor::black),
       std::get<tboolean>(record[4].value).value.value_or(true));
 
   return {};
@@ -918,7 +948,7 @@ std::optional<data::tparse_error> parse_group(data::tstate &state,
       std::get<tid>(record[1].value).value.value(),
       std::get<tstring>(record[2].value).value.value(),
       std::get<tstring>(record[3].value).value.value_or(""),
-      std::get<tcolor>(record[4].value).value.value_or(""),
+      std::get<tcolor>(record[4].value).value.value_or(data::tcolor::black),
       std::get<tboolean>(record[5].value).value.value_or(true));
 
   return {};

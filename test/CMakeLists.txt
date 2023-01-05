@@ -27,6 +27,7 @@ add_custom_target(helpers
 
 add_executable(tests
 	data/parse_basics.cpp
+	data/parse_color.cpp
 	data/parse_group.cpp
 	data/parse_label.cpp
 	data/parse_project.cpp

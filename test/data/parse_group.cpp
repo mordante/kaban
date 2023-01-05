@@ -286,10 +286,10 @@ color=)";
   std::expected<data::tstate *, data::tparse_error *> result =
       data::parse(input);
 
-  ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result,
-            data::tstate{.projects = {data::tproject{42, "test"}},
-                         .groups = {data::tgroup{1, 42, "abc", "def"}}});
+  ASSERT_FALSE(result);
+  expect_eq(
+      *result.error(),
+      data::tparse_error{11, "", "invalid color value for field »color«"});
 }
 
 TEST(parser_group, color_duplicate) {
@@ -424,7 +424,9 @@ active=false
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
-                                   .groups = {data::tgroup{1, 42, "foo", "bar",
-                                                           "red", false}}});
+  expect_eq(
+      **result,
+      data::tstate{.projects = {data::tproject{42, "test"}},
+                   .groups = {data::tgroup{1, 42, "foo", "bar",
+                                           data::tcolor::light_red, false}}});
 }

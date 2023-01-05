@@ -19,7 +19,6 @@ message {}
 
 export void expect_eq(const data::tparse_error &lhs,
                       const data::tparse_error &rhs) {
-
   EXPECT_EQ(lhs.line_no, rhs.line_no);
   EXPECT_EQ(lhs.line, rhs.line);
   EXPECT_EQ(lhs.message, rhs.message);

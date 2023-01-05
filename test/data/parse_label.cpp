@@ -162,8 +162,9 @@ color=)";
   std::expected<data::tstate *, data::tparse_error *> result =
       data::parse(input);
 
-  ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "abc", "def"}}});
+  ASSERT_FALSE(result);
+  expect_eq(*result.error(),
+            data::tparse_error{6, "", "invalid color value for field »color«"});
 }
 
 TEST(parser_label, color_duplicate) {
@@ -212,5 +213,6 @@ color=red
 
   ASSERT_TRUE(result) << format(*result.error());
   expect_eq(**result,
-            data::tstate{.labels = {data::tlabel{1, "foo", "bar", "red"}}});
+            data::tstate{.labels = {data::tlabel{1, "foo", "bar",
+                                                 data::tcolor::light_red}}});
 }
