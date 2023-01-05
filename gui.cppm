@@ -134,11 +134,7 @@ public:
       result.push_back(ftxui::Renderer([&] {
         return ftxui::window(
             ftxui::text("After"),
-            // TODO use formatter calendar after it has landed.
-            ftxui::text(std::format(
-                "{}.{:02}.{:02}", static_cast<int>(task_->after->year()),
-                static_cast<unsigned>(task_->after->month()),
-                static_cast<unsigned>(task_->after->day()))));
+            ftxui::text(std::format("{:%Y.%m.%d}", *task_->after)));
       }));
     }
 
