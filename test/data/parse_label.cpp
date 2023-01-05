@@ -130,7 +130,7 @@ description=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.labels = {label{1, "abc"}}});
+  expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "abc"}}});
 }
 
 TEST(parser_label, description_duplicate) {
@@ -163,7 +163,7 @@ color=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.labels = {label{1, "abc", "def"}}});
+  expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "abc", "def"}}});
 }
 
 TEST(parser_label, color_duplicate) {
@@ -195,7 +195,7 @@ name=foo)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.labels = {label{1, "foo"}}});
+  expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "foo"}}});
 }
 
 TEST(parser_label, all_fields) {
@@ -211,5 +211,6 @@ color=red
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.labels = {label{1, "foo", "bar", "red"}}});
+  expect_eq(**result,
+            data::tstate{.labels = {data::tlabel{1, "foo", "bar", "red"}}});
 }

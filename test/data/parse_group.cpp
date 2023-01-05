@@ -243,8 +243,8 @@ description=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{42, "test"}},
-                                   .groups = {group{1, 42, "abc"}}});
+  expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
+                                   .groups = {data::tgroup{1, 42, "abc"}}});
 }
 
 TEST(parser_group, description_duplicate) {
@@ -287,8 +287,9 @@ color=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{42, "test"}},
-                                   .groups = {group{1, 42, "abc", "def"}}});
+  expect_eq(**result,
+            data::tstate{.projects = {data::tproject{42, "test"}},
+                         .groups = {data::tgroup{1, 42, "abc", "def"}}});
 }
 
 TEST(parser_group, color_duplicate) {
@@ -400,8 +401,8 @@ name=foo)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{42, "test"}},
-                                   .groups = {group{1, 42, "foo"}}});
+  expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
+                                   .groups = {data::tgroup{1, 42, "foo"}}});
 }
 
 TEST(parser_group, all_fields) {
@@ -423,7 +424,7 @@ active=false
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result,
-            data::tstate{.projects = {project{42, "test"}},
-                         .groups = {group{1, 42, "foo", "bar", "red", false}}});
+  expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
+                                   .groups = {data::tgroup{1, 42, "foo", "bar",
+                                                           "red", false}}});
 }

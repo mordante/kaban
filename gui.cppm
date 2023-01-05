@@ -56,7 +56,7 @@ ftxui::Element create_label(std::string text, std::string_view color) {
   return ftxui::bgcolor(to_color(color), ftxui::text(text));
 }
 
-ftxui::Component create_title(const task *task) {
+ftxui::Component create_title(const data::ttask *task) {
   return ftxui::Renderer([=] {
     ftxui::Elements result;
     result.push_back(ftxui::text(std::format("{:3} ", task->id)));
@@ -65,12 +65,12 @@ ftxui::Component create_title(const task *task) {
             task->group ? data::get_group(task->group).project : task->project;
         project_id) {
 
-      const project &project = data::get_project(project_id);
+      const data::tproject &project = data::get_project(project_id);
       result.push_back(create_label(project.name, project.color));
     }
 
     if (task->group) {
-      const group &group = data::get_group(task->group);
+      const data::tgroup &group = data::get_group(task->group);
       result.push_back(create_label(group.name, group.color));
     }
 
@@ -83,7 +83,7 @@ ftxui::Component create_title(const task *task) {
 
     ftxui::Elements labels;
     for (auto &id : task->labels) {
-      const label &label = data::get_label(id);
+      const data::tlabel &label = data::get_label(id);
       labels.push_back(create_label(label.name, label.color));
     }
 
@@ -93,12 +93,12 @@ ftxui::Component create_title(const task *task) {
 
 class tticket final : public ftxui::ComponentBase {
 public:
-  explicit tticket(const task *task) : task_(task) {
+  explicit tticket(const data::ttask *task) : task_(task) {
 
     ftxui::Components result;
     result.push_back(create_title(task_));
     if (!task_->description.empty()) {
-      show_description = task_->status == task::tstatus::progress;
+      show_description = task_->status == data::ttask::tstatus::progress;
       result.push_back(ftxui::Container::Horizontal(
           {ftxui::Checkbox("", &show_description),
            ftxui::Renderer([&] { return multiline_text(task_->description); }) |
@@ -148,12 +148,13 @@ public:
   bool Focusable() const override { return true; }
 
 private:
-  const task *task_;
+  const data::ttask *task_;
   bool show_description{false};
   ftxui::Component widget_;
 };
 
-ftxui::Components create_tickets(const std::vector<const task *> &tasks) {
+ftxui::Components
+create_tickets(const std::vector<const data::ttask *> &tasks) {
   ftxui::Components result;
   for (const auto *task : tasks)
     result.emplace_back(std::make_shared<tticket>(task));
@@ -178,9 +179,9 @@ constexpr std::array<std::string_view, column_count> column_names = {
     "Inactive",    "Blocked",   "Backlog", "Selected",
     "In progress", "In review", "Done",    "Discarded"};
 
-tcolumn_index get_column_index(const task &task) {
+tcolumn_index get_column_index(const data::ttask &task) {
   switch (task.status) {
-  case task::tstatus::backlog:
+  case data::ttask::tstatus::backlog:
     if (!data::is_active(task))
       return inactive;
 
@@ -189,19 +190,19 @@ tcolumn_index get_column_index(const task &task) {
 
     return backlog;
 
-  case task::tstatus::selected:
+  case data::ttask::tstatus::selected:
     return selected;
 
-  case task::tstatus::progress:
+  case data::ttask::tstatus::progress:
     return progress;
 
-  case task::tstatus::review:
+  case data::ttask::tstatus::review:
     return review;
 
-  case task::tstatus::done:
+  case data::ttask::tstatus::done:
     return done;
 
-  case task::tstatus::discarded:
+  case data::ttask::tstatus::discarded:
     return discarded;
   }
 }
@@ -326,7 +327,7 @@ private:
 
 class tlabel final : public ftxui::ComponentBase {
 public:
-  explicit tlabel(const label *label) {
+  explicit tlabel(const data::tlabel *label) {
     Add(ftxui::Renderer([=] {
       ftxui::Elements elements;
       elements.emplace_back(ftxui::text(std::format("{:3} ", label->id)));

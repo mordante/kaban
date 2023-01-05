@@ -130,7 +130,7 @@ description=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{1, "abc"}}});
+  expect_eq(**result, data::tstate{.projects = {data::tproject{1, "abc"}}});
 }
 
 TEST(parser_project, description_duplicate) {
@@ -163,7 +163,8 @@ color=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{1, "abc", "def"}}});
+  expect_eq(**result,
+            data::tstate{.projects = {data::tproject{1, "abc", "def"}}});
 }
 
 TEST(parser_project, color_duplicate) {
@@ -250,7 +251,7 @@ name=foo)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{1, "foo"}}});
+  expect_eq(**result, data::tstate{.projects = {data::tproject{1, "foo"}}});
 }
 
 TEST(parser_project, all_fields) {
@@ -267,6 +268,6 @@ active=false
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result,
-            data::tstate{.projects = {project{1, "foo", "bar", "red", false}}});
+  expect_eq(**result, data::tstate{.projects = {data::tproject{1, "foo", "bar",
+                                                               "red", false}}});
 }

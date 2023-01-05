@@ -6,14 +6,8 @@ module;
 export module data;
 import stl;
 
-export struct label {
-  std::size_t id;
-  std::string name;
-  std::string description;
-  std::string color;
-};
-
-export struct project {
+export namespace data {
+struct tproject {
   std::size_t id;
   std::string name;
   std::string description;
@@ -21,8 +15,7 @@ export struct project {
   bool active{true};
 };
 
-export struct group {
-
+struct tgroup {
   std::size_t id;
   std::size_t project{0};
   std::string name;
@@ -31,7 +24,7 @@ export struct group {
   bool active{true};
 };
 
-export struct task {
+struct ttask {
 
   enum class tstatus {
     backlog,
@@ -54,12 +47,18 @@ export struct task {
   std::vector<std::size_t> requirements;
 };
 
-export namespace data {
+struct tlabel {
+  std::size_t id;
+  std::string name;
+  std::string description;
+  std::string color;
+};
+
 struct tstate {
-  std::vector<label> labels;
-  std::vector<project> projects;
-  std::vector<group> groups;
-  std::vector<task> tasks;
+  std::vector<tlabel> labels;
+  std::vector<tproject> projects;
+  std::vector<tgroup> groups;
+  std::vector<ttask> tasks;
 };
 
 struct tparse_error {
@@ -82,9 +81,9 @@ export namespace data {
 void set_state(data::tstate *state) { ::set_state(state); }
 } // namespace data
 
-bool is_complete(const task &task) {
-  return task.status == task::tstatus::done ||
-         task.status == task::tstatus::discarded;
+bool is_complete(const data::ttask &task) {
+  return task.status == data::ttask::tstatus::done ||
+         task.status == data::ttask::tstatus::discarded;
 }
 
 template <class T>
@@ -96,23 +95,23 @@ const T &get_record(const std::vector<T> &range, std::size_t id) {
 }
 
 export namespace data {
-const label &get_label(std::size_t id) {
+const data::tlabel &get_label(std::size_t id) {
   return get_record(data::get_state().labels, id);
 }
 
-const project &get_project(std::size_t id) {
+const data::tproject &get_project(std::size_t id) {
   return get_record(data::get_state().projects, id);
 }
 
-const group &get_group(std::size_t id) {
+const data::tgroup &get_group(std::size_t id) {
   return get_record(data::get_state().groups, id);
 }
 
-const task &get_task(std::size_t id) {
+const data::ttask &get_task(std::size_t id) {
   return get_record(data::get_state().tasks, id);
 }
 
-bool is_blocked(const task &task) {
+bool is_blocked(const data::ttask &task) {
   if (std::ranges::any_of(task.dependencies, [](std::size_t id) {
         return !is_complete(get_task(id));
       }))
@@ -125,14 +124,14 @@ bool is_blocked(const task &task) {
          static_cast<std::chrono::sys_days>(*task.after);
 }
 
-bool is_active(const task &task) {
+bool is_active(const data::ttask &task) {
   if (task.project != 0)
     return get_project(task.project).active;
 
   if (task.group == 0)
     return true;
 
-  group group = get_group(task.group);
+  data::tgroup group = get_group(task.group);
   return group.active && get_project(group.project).active;
 }
 
@@ -289,7 +288,7 @@ struct tboolean {
 };
 
 struct tstatus {
-  std::optional<task::tstatus> value;
+  std::optional<data::ttask::tstatus> value;
 };
 
 struct tdate {
@@ -406,17 +405,17 @@ parse_status(tfield &field, std::string_view input, int line_no) {
         std::format("duplicate entry for field »{}«", field.name)};
 
   if (input == "backlog")
-    status.value = task::tstatus::backlog;
+    status.value = data::ttask::tstatus::backlog;
   else if (input == "selected")
-    status.value = task::tstatus::selected;
+    status.value = data::ttask::tstatus::selected;
   else if (input == "progress")
-    status.value = task::tstatus::progress;
+    status.value = data::ttask::tstatus::progress;
   else if (input == "review")
-    status.value = task::tstatus::review;
+    status.value = data::ttask::tstatus::review;
   else if (input == "done")
-    status.value = task::tstatus::done;
+    status.value = data::ttask::tstatus::done;
   else if (input == "discarded")
-    status.value = task::tstatus::discarded;
+    status.value = data::ttask::tstatus::discarded;
   else
     return std::optional<data::tparse_error>{
         std::in_place, line_no, input,
@@ -621,28 +620,28 @@ validate_id(const tfield &field, const data::tstate &state, int line_no) {
   std::optional<data::tparse_error> result;
   switch (id.target) {
   case tid::ttarget::label:
-    return id.self ? validate_unique(state.labels, &label::id, *id.value, state,
-                                     field.name, line_no)
-                   : validate_exists(state.labels, &label::id, *id.value, state,
-                                     field.name, line_no);
-
-  case tid::ttarget::project:
-    return id.self ? validate_unique(state.projects, &project::id, *id.value,
+    return id.self ? validate_unique(state.labels, &data::tlabel::id, *id.value,
                                      state, field.name, line_no)
-                   : validate_exists(state.projects, &project::id, *id.value,
+                   : validate_exists(state.labels, &data::tlabel::id, *id.value,
                                      state, field.name, line_no);
 
+  case tid::ttarget::project:
+    return id.self ? validate_unique(state.projects, &data::tproject::id,
+                                     *id.value, state, field.name, line_no)
+                   : validate_exists(state.projects, &data::tproject::id,
+                                     *id.value, state, field.name, line_no);
+
   case tid::ttarget::group:
-    return id.self ? validate_unique(state.groups, &group::id, *id.value, state,
-                                     field.name, line_no)
-                   : validate_exists(state.groups, &group::id, *id.value, state,
-                                     field.name, line_no);
+    return id.self ? validate_unique(state.groups, &data::tgroup::id, *id.value,
+                                     state, field.name, line_no)
+                   : validate_exists(state.groups, &data::tgroup::id, *id.value,
+                                     state, field.name, line_no);
 
   case tid::ttarget::task:
-    return id.self ? validate_unique(state.tasks, &task::id, *id.value, state,
-                                     field.name, line_no)
-                   : validate_exists(state.tasks, &task::id, *id.value, state,
-                                     field.name, line_no);
+    return id.self ? validate_unique(state.tasks, &data::ttask::id, *id.value,
+                                     state, field.name, line_no)
+                   : validate_exists(state.tasks, &data::ttask::id, *id.value,
+                                     state, field.name, line_no);
   }
 }
 
@@ -721,7 +720,7 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
   case tid_list::ttarget::label:
     for (const auto value : *id_list.value) {
       std::optional<data::tparse_error> error = validate_exists(
-          state.labels, &label::id, value, state, field.name, line_no);
+          state.labels, &data::tlabel::id, value, state, field.name, line_no);
       if (error)
         return error;
     }
@@ -729,8 +728,9 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
 
   case tid_list::ttarget::project:
     for (const auto value : *id_list.value) {
-      std::optional<data::tparse_error> error = validate_exists(
-          state.projects, &project::id, value, state, field.name, line_no);
+      std::optional<data::tparse_error> error =
+          validate_exists(state.projects, &data::tproject::id, value, state,
+                          field.name, line_no);
       if (error)
         return error;
     }
@@ -739,7 +739,7 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
   case tid_list::ttarget::group:
     for (const auto value : *id_list.value) {
       std::optional<data::tparse_error> error = validate_exists(
-          state.groups, &group::id, value, state, field.name, line_no);
+          state.groups, &data::tgroup::id, value, state, field.name, line_no);
       if (error)
         return error;
     }
@@ -748,7 +748,7 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
   case tid_list::ttarget::task:
     for (const auto value : *id_list.value) {
       std::optional<data::tparse_error> error = validate_exists(
-          state.tasks, &task::id, value, state, field.name, line_no);
+          state.tasks, &data::ttask::id, value, state, field.name, line_no);
       if (error)
         return error;
     }
@@ -969,7 +969,8 @@ std::optional<data::tparse_error> parse_task(data::tstate &state,
       group,   //
       std::get<tstring>(record[3].value).value.value(),
       std::get<tstring>(record[4].value).value.value_or(""),
-      std::get<tstatus>(record[5].value).value.value_or(task::tstatus::backlog),
+      std::get<tstatus>(record[5].value)
+          .value.value_or(data::ttask::tstatus::backlog),
       std::get<tdate>(record[6].value).value, // the target type is an optional
       std::get<tid_list>(record[7].value)
           .value.value_or(std::vector<std::size_t>{}),

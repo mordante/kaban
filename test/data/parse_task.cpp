@@ -101,7 +101,7 @@ title=abc
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, project_does_not_exist) {
@@ -194,7 +194,7 @@ title=abc
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, group_does_not_exist) {
@@ -286,9 +286,10 @@ title=abc)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{42, "test project"}},
-                                   .groups = {group{99, 42, "test group"}},
-                                   .tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result,
+            data::tstate{.projects = {data::tproject{42, "test project"}},
+                         .groups = {data::tgroup{99, 42, "test group"}},
+                         .tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, project_zero_group_set) {
@@ -312,9 +313,10 @@ title=abc)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{42, "test project"}},
-                                   .groups = {group{99, 42, "test group"}},
-                                   .tasks = {task{1, 0, 99, "abc"}}});
+  expect_eq(**result,
+            data::tstate{.projects = {data::tproject{42, "test project"}},
+                         .groups = {data::tgroup{99, 42, "test group"}},
+                         .tasks = {data::ttask{1, 0, 99, "abc"}}});
 }
 
 TEST(parser_task, project_set_group_zero) {
@@ -338,9 +340,10 @@ title=abc)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.projects = {project{42, "test project"}},
-                                   .groups = {group{99, 42, "test group"}},
-                                   .tasks = {task{1, 42, 0, "abc"}}});
+  expect_eq(**result,
+            data::tstate{.projects = {data::tproject{42, "test project"}},
+                         .groups = {data::tgroup{99, 42, "test group"}},
+                         .tasks = {data::ttask{1, 42, 0, "abc"}}});
 }
 
 TEST(parser_task, project_set_group_set) {
@@ -424,7 +427,7 @@ description=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, description_duplicate) {
@@ -504,8 +507,10 @@ status=backlog)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc", "",
-                                                  task::tstatus::backlog}}});
+  expect_eq(
+      **result,
+      data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
+                                         data::ttask::tstatus::backlog}}});
 }
 
 TEST(parser_task, status_selected) {
@@ -519,8 +524,10 @@ status=selected)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc", "",
-                                                  task::tstatus::selected}}});
+  expect_eq(
+      **result,
+      data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
+                                         data::ttask::tstatus::selected}}});
 }
 
 TEST(parser_task, status_progress) {
@@ -534,8 +541,10 @@ status=progress)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc", "",
-                                                  task::tstatus::progress}}});
+  expect_eq(
+      **result,
+      data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
+                                         data::ttask::tstatus::progress}}});
 }
 
 TEST(parser_task, status_review) {
@@ -549,8 +558,9 @@ status=review)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc", "",
-                                                  task::tstatus::review}}});
+  expect_eq(**result,
+            data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
+                                               data::ttask::tstatus::review}}});
 }
 
 TEST(parser_task, status_done) {
@@ -564,8 +574,9 @@ status=done)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc", "",
-                                                  task::tstatus::done}}});
+  expect_eq(**result,
+            data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
+                                               data::ttask::tstatus::done}}});
 }
 
 TEST(parser_task, status_discarded) {
@@ -579,8 +590,10 @@ status=discarded)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc", "",
-                                                  task::tstatus::discarded}}});
+  expect_eq(
+      **result,
+      data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
+                                         data::ttask::tstatus::discarded}}});
 }
 
 TEST(parser_task, after_empty) {
@@ -770,7 +783,7 @@ labels=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, after_labels_valid) {
@@ -798,11 +811,12 @@ labels=10,15,    20)";
   ASSERT_TRUE(result) << format(*result.error());
   expect_eq(
       **result,
-      data::tstate{
-          .labels = {label{10, "abc"}, label{15, "def"}, label{20, "ghi"}},
-          .tasks = {task{1, 0, 0, "abc", "", task::tstatus::backlog,
-                         std::optional<std::chrono::year_month_day>{},
-                         std::vector<std::size_t>{10, 15, 20}}}});
+      data::tstate{.labels = {data::tlabel{10, "abc"}, data::tlabel{15, "def"},
+                              data::tlabel{20, "ghi"}},
+                   .tasks = {data::ttask{
+                       1, 0, 0, "abc", "", data::ttask::tstatus::backlog,
+                       std::optional<std::chrono::year_month_day>{},
+                       std::vector<std::size_t>{10, 15, 20}}}});
 }
 
 TEST(parser_task, after_labels_not_a_number) {
@@ -899,7 +913,7 @@ dependencies=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, after_dependencies_valid) {
@@ -917,12 +931,12 @@ dependencies=10,15,    20)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(
-      **result,
-      data::tstate{.tasks = {task{1, 0, 0, "abc", "", task::tstatus::backlog,
-                                  std::optional<std::chrono::year_month_day>{},
-                                  std::vector<std::size_t>{},
-                                  std::vector<std::size_t>{10, 15, 20}}}});
+  expect_eq(**result,
+            data::tstate{.tasks = {data::ttask{
+                             1, 0, 0, "abc", "", data::ttask::tstatus::backlog,
+                             std::optional<std::chrono::year_month_day>{},
+                             std::vector<std::size_t>{},
+                             std::vector<std::size_t>{10, 15, 20}}}});
 }
 
 TEST(parser_task, after_dependencies_not_a_number) {
@@ -1020,7 +1034,7 @@ requirements=)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, after_requirements_valid) {
@@ -1055,15 +1069,15 @@ requirements=10,15,    20)";
   ASSERT_TRUE(result) << format(*result.error());
   expect_eq(
       **result,
-      data::tstate{
-          .projects = {project{1, "project"}},
-          .groups = {group{10, 1, "abc"}, //
-                     group{15, 1, "def"}, //
-                     group{20, 1, "ghi"}},
-          .tasks = {task{1, 0, 0, "abc", "", task::tstatus::backlog,
-                         std::optional<std::chrono::year_month_day>{},
-                         std::vector<std::size_t>{}, std::vector<std::size_t>{},
-                         std::vector<std::size_t>{10, 15, 20}}}});
+      data::tstate{.projects = {data::tproject{1, "project"}},
+                   .groups = {data::tgroup{10, 1, "abc"}, //
+                              data::tgroup{15, 1, "def"}, //
+                              data::tgroup{20, 1, "ghi"}},
+                   .tasks = {data::ttask{
+                       1, 0, 0, "abc", "", data::ttask::tstatus::backlog,
+                       std::optional<std::chrono::year_month_day>{},
+                       std::vector<std::size_t>{}, std::vector<std::size_t>{},
+                       std::vector<std::size_t>{10, 15, 20}}}});
 }
 
 TEST(parser_task, after_requirements_not_a_number) {
@@ -1160,7 +1174,7 @@ title=abc)";
       data::parse(input);
 
   ASSERT_TRUE(result) << format(*result.error());
-  expect_eq(**result, data::tstate{.tasks = {task{1, 0, 0, "abc"}}});
+  expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
 }
 
 TEST(parser_task, all_fields_except_group) {
@@ -1218,25 +1232,26 @@ requirements=10,20,15
   ASSERT_TRUE(result) << format(*result.error());
   expect_eq(
       **result,
-      data::tstate{
-          .labels =
-              {
-                  label{2, "xxx"},
-                  label{4, "yyy"},
-                  label{8, "zzz"},
-              },
-          .projects = {project{42, "answer"}, project{99, "nice number"}},
-          .groups = {group{10, 42, "abc"}, //
-                     group{15, 99, "def"}, //
-                     group{20, 42, "ghi"}},
-          .tasks = {task{1, 42, 0, "abc", "message", task::tstatus::review,
-                         std::optional<std::chrono::year_month_day>{
-                             std::chrono::year_month_day{
-                                 std::chrono::year{2000}, std::chrono::month{1},
-                                 std::chrono::day{1}}},
-                         std::vector<std::size_t>{2, 8, 4},
-                         std::vector<std::size_t>{2, 3, 5, 7},
-                         std::vector<std::size_t>{10, 20, 15}}}});
+      data::tstate{.labels =
+                       {
+                           data::tlabel{2, "xxx"},
+                           data::tlabel{4, "yyy"},
+                           data::tlabel{8, "zzz"},
+                       },
+                   .projects = {data::tproject{42, "answer"},
+                                data::tproject{99, "nice number"}},
+                   .groups = {data::tgroup{10, 42, "abc"}, //
+                              data::tgroup{15, 99, "def"}, //
+                              data::tgroup{20, 42, "ghi"}},
+                   .tasks = {data::ttask{
+                       1, 42, 0, "abc", "message", data::ttask::tstatus::review,
+                       std::optional<std::chrono::year_month_day>{
+                           std::chrono::year_month_day{std::chrono::year{2000},
+                                                       std::chrono::month{1},
+                                                       std::chrono::day{1}}},
+                       std::vector<std::size_t>{2, 8, 4},
+                       std::vector<std::size_t>{2, 3, 5, 7},
+                       std::vector<std::size_t>{10, 20, 15}}}});
 }
 
 TEST(parser_task, all_fields_except_project) {
@@ -1294,23 +1309,24 @@ requirements=10,20,15
   ASSERT_TRUE(result) << format(*result.error());
   expect_eq(
       **result,
-      data::tstate{
-          .labels =
-              {
-                  label{2, "xxx"},
-                  label{4, "yyy"},
-                  label{8, "zzz"},
-              },
-          .projects = {project{42, "answer"}, project{99, "nice number"}},
-          .groups = {group{10, 42, "abc"}, //
-                     group{15, 99, "def"}, //
-                     group{20, 42, "ghi"}},
-          .tasks = {task{1, 0, 15, "abc", "message", task::tstatus::review,
-                         std::optional<std::chrono::year_month_day>{
-                             std::chrono::year_month_day{
-                                 std::chrono::year{2000}, std::chrono::month{1},
-                                 std::chrono::day{1}}},
-                         std::vector<std::size_t>{2, 8, 4},
-                         std::vector<std::size_t>{2, 3, 5, 7},
-                         std::vector<std::size_t>{10, 20, 15}}}});
+      data::tstate{.labels =
+                       {
+                           data::tlabel{2, "xxx"},
+                           data::tlabel{4, "yyy"},
+                           data::tlabel{8, "zzz"},
+                       },
+                   .projects = {data::tproject{42, "answer"},
+                                data::tproject{99, "nice number"}},
+                   .groups = {data::tgroup{10, 42, "abc"}, //
+                              data::tgroup{15, 99, "def"}, //
+                              data::tgroup{20, 42, "ghi"}},
+                   .tasks = {data::ttask{
+                       1, 0, 15, "abc", "message", data::ttask::tstatus::review,
+                       std::optional<std::chrono::year_month_day>{
+                           std::chrono::year_month_day{std::chrono::year{2000},
+                                                       std::chrono::month{1},
+                                                       std::chrono::day{1}}},
+                       std::vector<std::size_t>{2, 8, 4},
+                       std::vector<std::size_t>{2, 3, 5, 7},
+                       std::vector<std::size_t>{10, 20, 15}}}});
 }

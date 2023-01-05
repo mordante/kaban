@@ -25,14 +25,14 @@ export void expect_eq(const data::tparse_error &lhs,
   EXPECT_EQ(lhs.message, rhs.message);
 }
 
-export void expect_eq(const label &lhs, const label &rhs) {
+export void expect_eq(const data::tlabel &lhs, const data::tlabel &rhs) {
   EXPECT_EQ(lhs.id, rhs.id);
   EXPECT_EQ(lhs.name, rhs.name);
   EXPECT_EQ(lhs.description, rhs.description);
   EXPECT_EQ(lhs.color, rhs.color);
 }
 
-export void expect_eq(const project &lhs, const project &rhs) {
+export void expect_eq(const data::tproject &lhs, const data::tproject &rhs) {
   EXPECT_EQ(lhs.id, rhs.id);
   EXPECT_EQ(lhs.name, rhs.name);
   EXPECT_EQ(lhs.description, rhs.description);
@@ -40,7 +40,7 @@ export void expect_eq(const project &lhs, const project &rhs) {
   EXPECT_EQ(lhs.active, rhs.active);
 }
 
-export void expect_eq(const group &lhs, const group &rhs) {
+export void expect_eq(const data::tgroup &lhs, const data::tgroup &rhs) {
   EXPECT_EQ(lhs.id, rhs.id);
   EXPECT_EQ(lhs.project, rhs.project);
   EXPECT_EQ(lhs.name, rhs.name);
@@ -49,7 +49,7 @@ export void expect_eq(const group &lhs, const group &rhs) {
   EXPECT_EQ(lhs.active, rhs.active);
 }
 
-export void expect_eq(const task &lhs, const task &rhs) {
+export void expect_eq(const data::ttask &lhs, const data::ttask &rhs) {
   EXPECT_EQ(lhs.id, rhs.id);
   EXPECT_EQ(lhs.project, rhs.project);
   EXPECT_EQ(lhs.group, rhs.group);
