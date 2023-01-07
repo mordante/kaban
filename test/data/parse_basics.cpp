@@ -95,22 +95,23 @@ TEST(parser, multiline_no_terminator) {
                 1, input, "end of file before multiline terminator was found"});
 }
 
-// XXX line no after valid multiline
-
-#if 0
-TEST(parser, one_task) {
-  std::string input = R"([task]
+TEST(parser, multiline_line_count) {
+  std::string_view input = R"(
+[task]
 id=1
 title=hello
+description=<<<
+Hello
+>>>
+
+[task]
+ID=2
 )";
 
-#if 0
-  std::expected<std::unique_ptr<
-				  data::tstate //  *
-				  >, data::tparse_error>
-#endif
-     auto a = data::parse(input);
+  std::expected<data::tstate *, data::tparse_error *> result =
+      data::parse(input);
 
-  EXPECT_TRUE(a);
+  ASSERT_FALSE(result);
+  expect_eq(*result.error(),
+            data::tparse_error{10, "ID=2", "invalid field name"});
 }
-#endif

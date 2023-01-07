@@ -240,12 +240,13 @@ private:
               std::string_view{current_.cursor_, data_.end()},
               "end of file before multiline terminator was found"};
         }
-        ++next_.line_;
 
         if (std::string_view{pos, end} == ">>>") {
           value = std::string_view{begin, pos - 1};
           break;
         }
+
+        ++next_.line_;
       }
       // The last line is not "counted" since it always counts one line.
     }
@@ -844,7 +845,7 @@ parse_record(data::tstate &state, parser &parser, std::span<tfield> fields) {
         return std::optional<data::tparse_error>{
             std::in_place, parser.line(),
             std::string_view{line->data[0].begin(), line->data[1].end()},
-            "invalid value for header"};
+            "invalid field name"};
 
       std::optional<data::tparse_error> error =
           parse_element(*iter, line->data[1], parser.line());
