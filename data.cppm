@@ -105,6 +105,13 @@ bool is_complete(const data::ttask &task) {
          task.status == data::ttask::tstatus::discarded;
 }
 
+bool is_complete(const data::tgroup &group) {
+  return std::ranges::all_of(data::get_state().tasks,
+                             [id = group.id](const data::ttask &task) {
+                               return id != task.id || is_complete(task);
+                             });
+}
+
 template <class T>
 const T &get_record(const std::vector<T> &range, std::size_t id) {
   auto it = std::ranges::find(range, id, &T::id);
@@ -133,6 +140,11 @@ const data::ttask &get_task(std::size_t id) {
 bool is_blocked(const data::ttask &task) {
   if (std::ranges::any_of(task.dependencies, [](std::size_t id) {
         return !is_complete(get_task(id));
+      }))
+    return true;
+
+  if (std::ranges::any_of(task.requirements, [](std::size_t id) {
+        return !is_complete(get_group(id));
       }))
     return true;
 
