@@ -102,4 +102,5 @@ target_link_libraries(kaban
 		ftxui::component
 )
 
+add_subdirectory(scripts)
 add_subdirectory(test)
