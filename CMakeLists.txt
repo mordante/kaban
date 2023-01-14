@@ -20,6 +20,15 @@ file(MAKE_DIRECTORY ${PREBUILT_MODULE_PATH})
 add_compile_options(
 	-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
 )
+set(MODULE_FLAGS
+	${CMAKE_CXX_COMPILER}
+	${CMAKE_CXX_FLAGS}
+	-std=c++2b
+	-stdlib=libc++
+	-fexperimental-library
+	-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
+	--precompile
+)
 
 add_library(state state.cpp)
 add_dependencies(state data stl)
@@ -27,13 +36,7 @@ add_dependencies(state data stl)
 add_custom_command(
 	OUTPUT ${PREBUILT_MODULE_PATH}/stl.pcm
 	COMMAND
-		${CMAKE_CXX_COMPILER}
-		${CMAKE_CXX_FLAGS}
-		-std=c++2b
-		-stdlib=libc++
-		-fexperimental-library
-		-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
-		--precompile
+		${MODULE_FLAGS}
 		${CMAKE_CURRENT_SOURCE_DIR}/stl.cppm
 		-o ${PREBUILT_MODULE_PATH}/stl.pcm
 	DEPENDS
@@ -46,13 +49,7 @@ add_custom_target(stl
 add_custom_command(
 	OUTPUT ${PREBUILT_MODULE_PATH}/data.pcm
 	COMMAND
-		${CMAKE_CXX_COMPILER}
-		${CMAKE_CXX_FLAGS}
-		-std=c++2b
-		-stdlib=libc++
-		-fexperimental-library
-		-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
-		--precompile
+		${MODULE_FLAGS}
 		${CMAKE_CURRENT_SOURCE_DIR}/data.cppm
 		-o ${PREBUILT_MODULE_PATH}/data.pcm
 	DEPENDS
@@ -64,20 +61,29 @@ add_custom_target(data
 	DEPENDS
 		${PREBUILT_MODULE_PATH}/data.pcm
 )
+
+add_custom_command(
+	OUTPUT ${PREBUILT_MODULE_PATH}/ftxui.pcm
+	COMMAND
+		${MODULE_FLAGS}
+        -isystem ${ftxui_SOURCE_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/ftxui.cppm
+		-o ${PREBUILT_MODULE_PATH}/ftxui.pcm
+	DEPENDS
+		${CMAKE_CURRENT_SOURCE_DIR}/ftxui.cppm
+)
+add_custom_target(ftxui
+	DEPENDS
+		${PREBUILT_MODULE_PATH}/ftxui.pcm
+)
 add_custom_command(
 	OUTPUT ${PREBUILT_MODULE_PATH}/gui.pcm
 	COMMAND
-		${CMAKE_CXX_COMPILER}
-		${CMAKE_CXX_FLAGS}
-		-std=c++2b
-		-stdlib=libc++
-		-fexperimental-library
-		-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
-        -isystem ${ftxui_SOURCE_DIR}/include
-		--precompile
+		${MODULE_FLAGS}
 		${CMAKE_CURRENT_SOURCE_DIR}/gui.cppm
 		-o ${PREBUILT_MODULE_PATH}/gui.pcm
 	DEPENDS
+		${PREBUILT_MODULE_PATH}/ftxui.pcm
 		${PREBUILT_MODULE_PATH}/stl.pcm
 		${PREBUILT_MODULE_PATH}/data.pcm
 		${CMAKE_CURRENT_SOURCE_DIR}/gui.cppm
@@ -89,10 +95,11 @@ add_custom_target(gui
 add_executable(kaban
 	kaban.cpp
 )
-add_dependencies(kaban data gui stl)
+add_dependencies(kaban data ftxui gui stl)
 
 target_link_libraries(kaban
 	PRIVATE
+		${PREBUILT_MODULE_PATH}/ftxui.pcm
 		${PREBUILT_MODULE_PATH}/gui.pcm
 		${PREBUILT_MODULE_PATH}/data.pcm
 		${PREBUILT_MODULE_PATH}/stl.pcm

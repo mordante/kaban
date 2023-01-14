@@ -15,6 +15,7 @@ module;
 #include <format>
 #include <fstream>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -40,7 +41,10 @@ using std::addressof;
 using std::allocate_shared;
 using std::allocator_traits;
 using std::array;
+using std::cerr;
+using std::clog;
 using std::construct_at;
+using std::cout;
 using std::default_initializable;
 using std::errc;
 using std::find;
@@ -50,6 +54,7 @@ using std::from_chars;
 using std::from_chars_result;
 using std::function;
 using std::get;
+using std::identity;
 using std::ifstream;
 using std::in_place;
 using std::indirect_binary_predicate;
@@ -68,11 +73,17 @@ using std::string_view;
 using std::unique_ptr;
 using std::variant;
 using std::vector;
+using std::operator<<;
 using std::operator==;
-using std::identity;
+using std::operator+;
 namespace chrono {
 using std::chrono::day;
 using std::chrono::month;
+using std::chrono::sys_days;
+using std::chrono::system_clock;
+using std::chrono::year;
+using std::chrono::year_month_day;
+using std::chrono::operator<<;
 using std::chrono::operator!=;
 using std::chrono::operator<;
 using std::chrono::operator<=;
@@ -80,17 +91,17 @@ using std::chrono::operator<=>;
 using std::chrono::operator==;
 using std::chrono::operator>;
 using std::chrono::operator>=;
-using std::chrono::sys_days;
-using std::chrono::system_clock;
-using std::chrono::year;
-using std::chrono::year_month_day;
 } // namespace chrono
 namespace ranges {
+using std::ranges::all_of;
+using std::ranges::any_of;
 using std::ranges::begin;
 using std::ranges::borrowed_iterator_t;
+using std::ranges::data;
 using std::ranges::end;
 using std::ranges::equal_to;
 using std::ranges::find;
 using std::ranges::iterator_t;
+using std::ranges::size;
 } // namespace ranges
 } // namespace std

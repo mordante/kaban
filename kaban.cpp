@@ -1,40 +1,9 @@
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/screen.hpp>
-
 #include <expected>
-#include <iostream>
-
-#include <sstream> // multiline
 
 import data;
+import ftxui;
 import gui;
 import stl;
-
-namespace ftxui {
-
-Element multiline_text(const std::string &the_text) {
-  Elements output;
-  std::stringstream ss(the_text);
-  std::string line;
-  while (std::getline(ss, line)) {
-    output.push_back(paragraph(line));
-  }
-  return vbox(output);
-}
-
-// position x y is the end of the visible area
-Decorator xfocusPosition(int x) { return focusPosition(x, 0); }
-Decorator yfocusPosition(int y) { return focusPosition(0, y); }
-Decorator xfocusPositionRelative(float x) {
-  return focusPositionRelative(x, 0.0f);
-}
-Decorator yfocusPositionRelative(float y) {
-  return focusPositionRelative(0.0f, y);
-}
-
-} // namespace ftxui
 
 int main(int argc, const char *argv[]) {
   char *home = std::getenv("HOME");

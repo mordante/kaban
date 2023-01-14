@@ -1,23 +1,10 @@
 module;
 #include <algorithm>
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/screen/screen.hpp>
 
 export module gui;
+import ftxui;
 import data;
 import stl;
-
-ftxui::Element multiline_text(const std::string &the_text) {
-  ftxui::Elements output;
-  std::stringstream ss(the_text);
-  std::string line;
-  while (std::getline(ss, line)) {
-    output.push_back(ftxui::paragraph(line));
-  }
-  return ftxui::vbox(output);
-}
 
 // TODO Tune foreground colours further.
 ftxui::Element create_text(std::string text, data::tcolor color) {
@@ -112,8 +99,9 @@ public:
       show_description = task_->status == data::ttask::tstatus::progress;
       result.push_back(ftxui::Container::Horizontal(
           {ftxui::Checkbox("", &show_description),
-           ftxui::Renderer([&] { return multiline_text(task_->description); }) |
-               ftxui::Maybe(&show_description)}));
+           ftxui::Renderer([&] {
+             return ftxui::multiline_text(task_->description);
+           }) | ftxui::Maybe(&show_description)}));
     }
 
     if (!task_->dependencies.empty()) {
