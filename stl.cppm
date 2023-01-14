@@ -16,6 +16,7 @@ module;
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -41,6 +42,7 @@ using std::addressof;
 using std::allocate_shared;
 using std::allocator_traits;
 using std::array;
+using std::back_insert_iterator;
 using std::cerr;
 using std::clog;
 using std::construct_at;

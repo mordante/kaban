@@ -38,6 +38,7 @@ using ftxui::operator|;
 
 namespace Container {
 using ftxui::Container::Horizontal;
+using ftxui::Container::Tab;
 using ftxui::Container::Vertical;
 } // namespace Container
 

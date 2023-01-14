@@ -5,6 +5,10 @@ import ftxui;
 import gui;
 import stl;
 
+// Quite often the application fails due to changes in modules not being picked
+// up properly. Enable this to force a rebuild, if needed.
+static const char *generaton = __TIME__;
+
 int main(int argc, const char *argv[]) {
   char *home = std::getenv("HOME");
   std::ifstream file{home + std::string{"/kaban"}};
@@ -27,22 +31,18 @@ int main(int argc, const char *argv[]) {
   // data::set_state(std::unique_ptr<data::tstate>{result.value()});
   data::set_state(result.value());
 
-#if 0
-  // Part of #43
   int tab = 0;
   std::vector<std::string> labels{"Board", "Configuration"};
-#endif
   ftxui::ScreenInteractive screen = ftxui::ScreenInteractive::Fullscreen();
   screen.Loop(ftxui::Container::Vertical({
-                ftxui::Button("Quit", screen.ExitLoopClosure()),
-#if 1
-                    gui::board()
-#else
-                    // Selection seems odd in ftxui
-                    ftxui::Toggle(std::addressof(labels), std::addressof(tab)),
-                    ftxui::Container::Tab({gui::board(), gui::configuration()},
-                                          std::addressof(tab)),
-#endif
+                  ftxui::Button("Quit", screen.ExitLoopClosure()),
+                  // There seem to be some issues with the selection in
+                  // FTXUI:
+                  // - partly https://github.com/ArthurSonzogni/FTXUI/issues/523
+                  // - and another not yet investigated issue.
+                  ftxui::Toggle(std::addressof(labels), std::addressof(tab)),
+                  ftxui::Container::Tab({gui::board(), gui::configuration()},
+                                        std::addressof(tab)),
               })             //
               | ftxui::xflex //
               | ftxui::border);

@@ -26,6 +26,13 @@ enum class tcolor {
   white,
 };
 
+struct tlabel {
+  std::size_t id;
+  std::string name;
+  std::string description;
+  tcolor color;
+};
+
 struct tproject {
   std::size_t id;
   std::string name;
@@ -64,13 +71,6 @@ struct ttask {
   std::vector<std::size_t> labels;
   std::vector<std::size_t> dependencies;
   std::vector<std::size_t> requirements;
-};
-
-struct tlabel {
-  std::size_t id;
-  std::string name;
-  std::string description;
-  tcolor color;
 };
 
 struct tstate {

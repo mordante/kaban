@@ -7,13 +7,8 @@ add_custom_command(
 	COMMAND
 		${CMAKE_CXX_COMPILER}
 		${CMAKE_CXX_FLAGS}
-		-O0 -g
-		-std=c++2b
-		-stdlib=libc++
-		-fexperimental-library
-		-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
+		${MODULE_FLAGS}
 		-isystem ${googletest_SOURCE_DIR}/googletest/include
-		--precompile
 		${CMAKE_CURRENT_SOURCE_DIR}/helpers.cppm
 		-o ${PREBUILT_MODULE_PATH}/helpers.pcm
 	DEPENDS
