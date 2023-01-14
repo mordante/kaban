@@ -108,7 +108,7 @@ bool is_complete(const data::ttask &task) {
 bool is_complete(const data::tgroup &group) {
   return std::ranges::all_of(data::get_state().tasks,
                              [id = group.id](const data::ttask &task) {
-                               return id != task.id || is_complete(task);
+                               return id != task.group || is_complete(task);
                              });
 }
 
