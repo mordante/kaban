@@ -76,22 +76,6 @@ add_custom_target(ftxui
 	DEPENDS
 		${PREBUILT_MODULE_PATH}/ftxui.pcm
 )
-add_custom_command(
-	OUTPUT ${PREBUILT_MODULE_PATH}/gui.pcm
-	COMMAND
-		${MODULE_FLAGS}
-		${CMAKE_CURRENT_SOURCE_DIR}/gui.cppm
-		-o ${PREBUILT_MODULE_PATH}/gui.pcm
-	DEPENDS
-		${PREBUILT_MODULE_PATH}/ftxui.pcm
-		${PREBUILT_MODULE_PATH}/stl.pcm
-		${PREBUILT_MODULE_PATH}/data.pcm
-		${CMAKE_CURRENT_SOURCE_DIR}/gui.cppm
-)
-add_custom_target(gui
-	DEPENDS
-		${PREBUILT_MODULE_PATH}/gui.pcm
-)
 add_executable(kaban
 	kaban.cpp
 )
@@ -99,9 +83,12 @@ add_dependencies(kaban data ftxui gui stl)
 
 target_link_libraries(kaban
 	PRIVATE
-		${PREBUILT_MODULE_PATH}/ftxui.pcm
-		${PREBUILT_MODULE_PATH}/gui.pcm
 		${PREBUILT_MODULE_PATH}/data.pcm
+		${PREBUILT_MODULE_PATH}/ftxui.pcm
+		${PREBUILT_MODULE_PATH}/gui-board.pcm
+		${PREBUILT_MODULE_PATH}/gui-configuration.pcm
+		${PREBUILT_MODULE_PATH}/gui-helpers.pcm
+		${PREBUILT_MODULE_PATH}/gui.pcm
 		${PREBUILT_MODULE_PATH}/stl.pcm
 		state
 		ftxui::screen
@@ -109,5 +96,6 @@ target_link_libraries(kaban
 		ftxui::component
 )
 
+add_subdirectory(gui)
 add_subdirectory(scripts)
 add_subdirectory(test)

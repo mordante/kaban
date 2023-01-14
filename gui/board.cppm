@@ -1,93 +1,13 @@
 module;
 #include <algorithm>
 
-export module gui;
+export module gui:board;
+import :helpers;
 import ftxui;
 import data;
 import stl;
 
-// TODO Tune foreground colours further.
-ftxui::Element create_text(std::string text, data::tcolor color) {
-  ftxui::Element result = ftxui::text(text);
-  switch (color) {
-  case data::tcolor::black:
-    return result;
-  case data::tcolor::red:
-    return result | ftxui::bgcolor(ftxui::Color::Red) |
-           ftxui::color(ftxui::Color::Black);
-  case data::tcolor::green:
-    return result | ftxui::bgcolor(ftxui::Color::Green) |
-           ftxui::color(ftxui::Color::Black);
-  case data::tcolor::yellow:
-    return result | ftxui::bgcolor(ftxui::Color::Yellow);
-  case data::tcolor::blue:
-    return result | ftxui::bgcolor(ftxui::Color::Blue);
-  case data::tcolor::magenta:
-    return result | ftxui::bgcolor(ftxui::Color::Magenta);
-  case data::tcolor::cyan:
-    return result | ftxui::bgcolor(ftxui::Color::Cyan) |
-           ftxui::color(ftxui::Color::Black);
-  case data::tcolor::light_gray:
-    return result | ftxui::bgcolor(ftxui::Color::GrayLight);
-  case data::tcolor::dark_gray:
-    return result | ftxui::bgcolor(ftxui::Color::GrayDark);
-  case data::tcolor::light_red:
-    return result | ftxui::bgcolor(ftxui::Color::RedLight);
-  case data::tcolor::light_green:
-    return result | ftxui::bgcolor(ftxui::Color::GreenLight) |
-           ftxui::color(ftxui::Color::Black);
-  case data::tcolor::light_yellow:
-    return result | ftxui::bgcolor(ftxui::Color::YellowLight);
-  case data::tcolor::light_blue:
-    return result | ftxui::bgcolor(ftxui::Color::BlueLight);
-  case data::tcolor::light_magenta:
-    return result | ftxui::bgcolor(ftxui::Color::MagentaLight);
-  case data::tcolor::light_cyan:
-    return result | ftxui::bgcolor(ftxui::Color::CyanLight);
-  case data::tcolor::white:
-    return result | ftxui::bgcolor(ftxui::Color::White) |
-           ftxui::color(ftxui::Color::Black);
-  }
-}
-
-ftxui::Element create_label(std::string text, data::tcolor color) {
-  return create_text("[" + text + "]", color);
-}
-
-ftxui::Component create_title(const data::ttask *task) {
-  return ftxui::Renderer([=] {
-    ftxui::Elements result;
-    result.push_back(ftxui::text(std::format("{:3} ", task->id)));
-
-    if (size_t project_id =
-            task->group ? data::get_group(task->group).project : task->project;
-        project_id) {
-
-      const data::tproject &project = data::get_project(project_id);
-      result.push_back(create_label(project.name, project.color));
-    }
-
-    if (task->group) {
-      const data::tgroup &group = data::get_group(task->group);
-      result.push_back(create_label(group.name, group.color));
-    }
-
-    // TODO ugly spacing hack.
-    result.push_back(ftxui::text(" "));
-    result.push_back(ftxui::text(task->title));
-
-    if (task->labels.empty())
-      return ftxui::hflow(result);
-
-    ftxui::Elements labels;
-    for (auto &id : task->labels) {
-      const data::tlabel &label = data::get_label(id);
-      labels.push_back(create_label(label.name, label.color));
-    }
-
-    return ftxui::vbox(ftxui::hflow(result), ftxui::hflow(labels));
-  });
-}
+export namespace detail {
 
 class tticket final : public ftxui::ComponentBase {
 public:
@@ -324,87 +244,4 @@ private:
   };
 };
 
-class tlabel final : public ftxui::ComponentBase {
-public:
-  explicit tlabel(const data::tlabel *label) {
-    Add(ftxui::Renderer([=] {
-      ftxui::Elements elements;
-      elements.emplace_back(ftxui::text(std::format("{:3} ", label->id)));
-      elements.emplace_back(create_text(label->name, label->color));
-      if (!label->description.empty())
-        elements.emplace_back(ftxui::text(label->description) | ftxui::border);
-      return ftxui::vbox({elements});
-    }));
-  }
-};
-
-class tconfiguration final : public ftxui::ComponentBase {
-public:
-  tconfiguration() { load_configuration(); }
-
-  ftxui::Element Render() override {
-    ftxui::Elements columns;
-    if (!labels_.empty())
-      columns.emplace_back(
-          ftxui::window(ftxui::text("Labels"), ftxui::vbox(labels_)) |
-          ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 19) |
-          ftxui::size(ftxui::WIDTH, ftxui::LESS_THAN, 67));
-
-    return ftxui::hbox(columns);
-
-#if 0
-    // Note this function "digs up" the elements from the internal container.
-    // This gives a lot of hard-coded magic numbers. This should be improved.
-
-    ftxui::Elements columns;
-    for (std::size_t i = 0; i < column_count; ++i)
-      if (column_visibility_[i]())
-        columns.emplace_back(ftxui::window(
-            ftxui::text(std::string(column_names[i])),
-            ChildAt(0)->ChildAt(1)
-                        ->ChildAt(i)
-                        ->ChildAt(0) // maybe
-                        ->ChildAt(0) // maximum width
-                        ->ChildAt(0) // minimum width
-                        ->ChildCount() == 0
-                ? ftxui::filler() | ftxui::size(ftxui::WIDTH, ftxui::EQUAL, 20)
-                : ChildAt(0)->ChildAt(1)->ChildAt(i)->Render()));
-
-    return ftxui::vbox({
-        ChildAt(0)->ChildAt(0)->ChildAt(0)->Render(),
-        ftxui::hflow({
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(0)->Render(),
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(1)->Render(),
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(2)->Render(),
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(3)->Render(),
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(4)->Render(),
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(5)->Render(),
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(6)->Render(),
-            ChildAt(0)->ChildAt(0)->ChildAt(1)->ChildAt(7)->Render(),
-        }),
-        ftxui::hbox(columns),
-    });
-#endif
-  }
-
-private:
-  void load_configuration() {
-    ftxui::Components labels;
-    for (const auto &label : data::get_state().labels)
-      labels.emplace_back(labels_.emplace_back(
-          std::make_shared<tlabel>(std::addressof(label))));
-
-    Add(ftxui::Container::Horizontal({
-        ftxui::Container::Vertical(std::move(labels)),
-    }));
-  }
-
-  std::vector<std::shared_ptr<tlabel>> labels_;
-};
-
-export namespace gui {
-
-ftxui::Component board() { return std::make_shared<tboard>(); }
-ftxui::Component configuration() { return std::make_shared<tconfiguration>(); }
-
-} // namespace gui
+} // namespace detail
