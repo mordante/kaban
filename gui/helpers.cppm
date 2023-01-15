@@ -11,13 +11,13 @@ ftxui::Element create_text(std::string text, data::tcolor color) {
   case data::tcolor::black:
     return result;
   case data::tcolor::red:
-    return result | ftxui::bgcolor(ftxui::Color::Red) |
-           ftxui::color(ftxui::Color::Black);
+    return result | ftxui::bgcolor(ftxui::Color::Red);
   case data::tcolor::green:
     return result | ftxui::bgcolor(ftxui::Color::Green) |
            ftxui::color(ftxui::Color::Black);
   case data::tcolor::yellow:
-    return result | ftxui::bgcolor(ftxui::Color::Yellow);
+    return result | ftxui::bgcolor(ftxui::Color::Yellow) |
+           ftxui::color(ftxui::Color::Black);
   case data::tcolor::blue:
     return result | ftxui::bgcolor(ftxui::Color::Blue);
   case data::tcolor::magenta:
@@ -26,7 +26,8 @@ ftxui::Element create_text(std::string text, data::tcolor color) {
     return result | ftxui::bgcolor(ftxui::Color::Cyan) |
            ftxui::color(ftxui::Color::Black);
   case data::tcolor::light_gray:
-    return result | ftxui::bgcolor(ftxui::Color::GrayLight);
+    return result | ftxui::bgcolor(ftxui::Color::GrayLight) |
+           ftxui::color(ftxui::Color::Black);
   case data::tcolor::dark_gray:
     return result | ftxui::bgcolor(ftxui::Color::GrayDark);
   case data::tcolor::light_red:
@@ -35,9 +36,11 @@ ftxui::Element create_text(std::string text, data::tcolor color) {
     return result | ftxui::bgcolor(ftxui::Color::GreenLight) |
            ftxui::color(ftxui::Color::Black);
   case data::tcolor::light_yellow:
-    return result | ftxui::bgcolor(ftxui::Color::YellowLight);
+    return result | ftxui::bgcolor(ftxui::Color::YellowLight) |
+           ftxui::color(ftxui::Color::Black);
   case data::tcolor::light_blue:
-    return result | ftxui::bgcolor(ftxui::Color::BlueLight);
+    return result | ftxui::bgcolor(ftxui::Color::BlueLight) |
+           ftxui::color(ftxui::Color::Black);
   case data::tcolor::light_magenta:
     return result | ftxui::bgcolor(ftxui::Color::MagentaLight);
   case data::tcolor::light_cyan:
