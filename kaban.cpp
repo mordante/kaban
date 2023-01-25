@@ -1,5 +1,3 @@
-#include <expected>
-
 import data;
 import ftxui;
 import gui;
@@ -14,10 +12,9 @@ int main(int argc, const char *argv[]) {
   std::ifstream file{home + std::string{"/kaban"}};
 
   std::string input{std::istreambuf_iterator<char>(file), {}};
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
   if (!result) {
-    data::tparse_error &error = *result.error();
+    data::tparse_error error = std::move(result).error();
     std::cerr << std::format(R"(Failed parsing
 {}:{}
 {}
@@ -26,7 +23,7 @@ int main(int argc, const char *argv[]) {
                              home + std::string{"/kaban"}, error.line_no,
                              error.line, error.message);
 
-    return EXIT_FAILURE;
+    return 1;
   }
   // data::set_state(std::unique_ptr<data::tstate>{result.value()});
   data::set_state(result.value());

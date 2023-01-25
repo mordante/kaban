@@ -1,6 +1,3 @@
-#include <expected>
-#include <string>
-
 #include <gtest/gtest.h>
 
 import helpers;
@@ -16,10 +13,9 @@ id=1
 name=a
 color=)" + name;
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
-  ASSERT_TRUE(result) << format(*result.error());
+  ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.labels = {data::tlabel{
                                        .id = 1, .name = "a", .color = color}}});
 }
@@ -50,12 +46,11 @@ id=1
 name=a
 color=)" + name;
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{5, name, "invalid color value for field »color«"});
 }
 

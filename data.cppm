@@ -1,7 +1,6 @@
 module;
 #include "state.hpp"
 #include <algorithm>
-#include <expected>
 
 export module data;
 import stl;
@@ -1103,7 +1102,7 @@ export namespace data {
  * Once this is fixed the state will be returned by a unqiue_ptr and the error
  * by value.
  */
-[[nodiscard]] std::expected<tstate *, tparse_error *>
+[[nodiscard]] std::expected<tstate *, tparse_error>
 parse(std::string_view input) {
   std::expected<std::unique_ptr<tstate>, tparse_error> result =
       hack::parse(input);
@@ -1111,7 +1110,7 @@ parse(std::string_view input) {
   if (result)
     return result->release();
 
-  return std::unexpected<tparse_error *>(new tparse_error(result.error()));
+  return std::unexpected<tparse_error>(result.error());
 }
 
 } // namespace data

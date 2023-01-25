@@ -6,12 +6,13 @@ module;
 // issues with
 // - algorithm
 // - ranges
-// - expected (https://github.com/llvm/llvm-project/issues/59719)
 
 #include <algorithm>
 #include <charconv>
 #include <chrono>
 #include <concepts>
+#include <cstdlib>
+#include <expected>
 #include <format>
 #include <fstream>
 #include <functional>
@@ -49,6 +50,7 @@ using std::construct_at;
 using std::cout;
 using std::default_initializable;
 using std::errc;
+using std::expected;
 using std::find;
 using std::format;
 using std::forward;
@@ -56,6 +58,7 @@ using std::from_chars;
 using std::from_chars_result;
 using std::function;
 using std::get;
+using std::getenv;
 using std::identity;
 using std::ifstream;
 using std::in_place;
@@ -72,6 +75,7 @@ using std::size_t;
 using std::span;
 using std::string;
 using std::string_view;
+using std::unexpected;
 using std::unique_ptr;
 using std::variant;
 using std::vector;

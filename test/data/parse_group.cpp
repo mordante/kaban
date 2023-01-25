@@ -1,6 +1,3 @@
-#include <expected>
-#include <string>
-
 #include <gtest/gtest.h>
 
 import helpers;
@@ -11,11 +8,10 @@ TEST(parser_group, id_missing) {
   std::string_view input = R"(
 [group])";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{2, "", "missing mandatory field »id«"});
 }
 
@@ -24,12 +20,11 @@ TEST(parser_group, id_zero) {
 [group]
 id=0)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{
           3, "0", "zero is not a valid value for mandatory id field »id«"});
 }
@@ -40,11 +35,10 @@ TEST(parser_group, id_duplicate) {
 id=1
 id=1)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{4, "1", "duplicate entry for field »id«"});
 }
 
@@ -53,11 +47,10 @@ TEST(parser_group, id_not_a_number) {
 [group]
 id=a)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{3, "a", "invalid number for field »id«"});
 }
 
@@ -66,12 +59,11 @@ TEST(parser_group, id_number_and_garbage) {
 [group]
 id=0a)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{3, "0a", "number contains non-digits for field »id«"});
 }
 
@@ -80,11 +72,10 @@ TEST(parser_group, project_missing) {
 [group]
 id=1)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{2, "", "missing mandatory field »project«"});
 }
 
@@ -94,11 +85,10 @@ TEST(parser_group, project_zero) {
 id=1
 project=0)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{
                 4, "0",
                 "zero is not a valid value for mandatory id field »project«"});
@@ -110,12 +100,11 @@ TEST(parser_group, project_does_not_exist) {
 id=1
 project=1)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{
           2, "", "id field »project« has no linked record for value »1«"});
 }
@@ -131,11 +120,10 @@ id=1
 project=1
 project=1)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{9, "1", "duplicate entry for field »project«"});
 }
 
@@ -145,11 +133,10 @@ TEST(parser_group, project_not_a_number) {
 id=1
 project=a)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{4, "a", "invalid number for field »project«"});
 }
 
@@ -159,11 +146,10 @@ TEST(parser_group, project_number_and_garbage) {
 id=1
 project=0a)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{
                 4, "0a", "number contains non-digits for field »project«"});
 }
@@ -178,11 +164,10 @@ name=test
 id=1
 project=1)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{6, "", "missing mandatory field »name«"});
 }
 
@@ -197,11 +182,10 @@ id=1
 project=1
 name=)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{9, "",
                                "an empty string is not a valid value for "
                                "mandatory string field »name«"});
@@ -219,11 +203,10 @@ project=1
 name=abc
 name=def)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{10, "def", "duplicate entry for field »name«"});
 }
 
@@ -239,10 +222,9 @@ project=42
 name=abc
 description=)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
-  ASSERT_TRUE(result) << format(*result.error());
+  ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
                                    .groups = {data::tgroup{1, 42, "abc"}}});
 }
@@ -261,11 +243,10 @@ description=This is the first description.
 description=This is the second description.
 )";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{11, "This is the second description.",
                                "duplicate entry for field »description«"});
 }
@@ -283,12 +264,11 @@ name=abc
 description=def
 color=)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{11, "", "invalid color value for field »color«"});
 }
 
@@ -307,12 +287,11 @@ color=red
 color=green
 )";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{12, "green", "duplicate entry for field »color«"});
 }
 
@@ -330,12 +309,11 @@ description=def
 color=green
 active=)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{12, "", "invalid boolean value for field »active«"});
 }
 
@@ -353,11 +331,10 @@ description=def
 color=green
 active=not a boolean value)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
-  expect_eq(*result.error(),
+  expect_eq(result.error(),
             data::tparse_error{12, "not a boolean value",
                                "invalid boolean value for field »active«"});
 }
@@ -377,12 +354,11 @@ color=green
 active=true
 active=false)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
-      *result.error(),
+      result.error(),
       data::tparse_error{13, "false", "duplicate entry for field »active«"});
 }
 
@@ -397,10 +373,9 @@ id=1
 project=42
 name=foo)";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
-  ASSERT_TRUE(result) << format(*result.error());
+  ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
                                    .groups = {data::tgroup{1, 42, "foo"}}});
 }
@@ -420,10 +395,9 @@ color=red
 active=false
 )";
 
-  std::expected<data::tstate *, data::tparse_error *> result =
-      data::parse(input);
+  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
 
-  ASSERT_TRUE(result) << format(*result.error());
+  ASSERT_TRUE(result) << format(result.error());
   expect_eq(
       **result,
       data::tstate{.projects = {data::tproject{42, "test"}},
