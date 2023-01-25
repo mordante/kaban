@@ -8,7 +8,8 @@ TEST(parser_label, id_missing) {
   std::string_view input = R"(
 [label])";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -20,7 +21,8 @@ TEST(parser_label, id_zero) {
 [label]
 id=0)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -35,7 +37,8 @@ TEST(parser_label, id_duplicate) {
 id=1
 id=1)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -47,7 +50,8 @@ TEST(parser_label, id_not_a_number) {
 [label]
 id=a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -59,7 +63,8 @@ TEST(parser_label, id_number_and_garbage) {
 [label]
 id=0a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -72,7 +77,8 @@ TEST(parser_label, name_missing) {
 [label]
 id=1)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -85,7 +91,8 @@ TEST(parser_label, name_empty) {
 id=1
 name=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -101,7 +108,8 @@ id=1
 name=abc
 name=def)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -115,7 +123,8 @@ id=1
 name=abc
 description=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "abc"}}});
@@ -130,7 +139,8 @@ description=This is the first description.
 description=This is the second description.
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -146,7 +156,8 @@ name=abc
 description=def
 color=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -163,7 +174,8 @@ color=red
 color=green
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -177,7 +189,8 @@ TEST(parser_label, minimal_valid) {
 id=1
 name=foo)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "foo"}}});
@@ -192,7 +205,8 @@ description=bar
 color=red
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result,

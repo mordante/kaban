@@ -1038,13 +1038,13 @@ parse_header(data::tstate &state, parser &parser, std ::string_view header) {
   return data::tparse_error{parser.line(), header, "found unknown header"};
 }
 
-namespace hack {
+export namespace data {
 
-using namespace data;
-
-// This is the real function, but passing this type from the module causes all
-// kinds of errors. Instead use a dummy wrapper for now. Obviously this is a
-// hack that may cause memory leaks.
+/**
+ * Parses the input data.
+ *
+ * Returns the parsed contents or the error.
+ */
 [[nodiscard]] std::expected<std::unique_ptr<tstate>, tparse_error>
 parse(std::string_view input) {
   auto state = std::make_unique<tstate>();
@@ -1082,35 +1082,6 @@ parse(std::string_view input) {
   }
 
   return std::move(state);
-}
-
-} // namespace hack
-
-export namespace data {
-
-/**
- * Parses the input data.
- *
- * Returns the parsed contents or the error.
- *
- * @note The lifetime of the input should outlast the returned error. The
- * returned state has no lifetime dependency on the input.
- *
- * @note The returned values are raw pointers due to a bug in Clang. When using
- * modules it can't properly find the properly constrained destructor of
- * std::excepted. This means the type hast to be trivial.
- * Once this is fixed the state will be returned by a unqiue_ptr and the error
- * by value.
- */
-[[nodiscard]] std::expected<tstate *, tparse_error>
-parse(std::string_view input) {
-  std::expected<std::unique_ptr<tstate>, tparse_error> result =
-      hack::parse(input);
-
-  if (result)
-    return result->release();
-
-  return std::unexpected<tparse_error>(result.error());
 }
 
 } // namespace data

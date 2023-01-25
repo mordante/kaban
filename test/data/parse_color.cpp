@@ -13,7 +13,8 @@ id=1
 name=a
 color=)" + name;
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.labels = {data::tlabel{
@@ -46,7 +47,8 @@ id=1
 name=a
 color=)" + name;
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(

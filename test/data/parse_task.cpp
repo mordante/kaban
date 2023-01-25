@@ -8,7 +8,8 @@ TEST(parser_task, id_missing) {
   std::string_view input = R"(
 [task])";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -20,7 +21,8 @@ TEST(parser_task, id_zero) {
 [task]
 id=0)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -35,7 +37,8 @@ TEST(parser_task, id_duplicate) {
 id=1
 id=1)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -47,7 +50,8 @@ TEST(parser_task, id_not_a_number) {
 [task]
 id=a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -59,7 +63,8 @@ TEST(parser_task, id_number_and_garbage) {
 [task]
 id=0a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -73,7 +78,8 @@ TEST(parser_task, project_empty) {
 id=1
 project=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -88,7 +94,8 @@ project=0
 title=abc
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
@@ -100,7 +107,8 @@ TEST(parser_task, project_does_not_exist) {
 id=1
 project=1)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -120,7 +128,8 @@ id=1
 project=1
 project=1)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -133,7 +142,8 @@ TEST(parser_task, project_not_a_number) {
 id=1
 project=a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -146,7 +156,8 @@ TEST(parser_task, project_number_and_garbage) {
 id=1
 project=0a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -160,7 +171,8 @@ TEST(parser_task, group_empty) {
 id=1
 group=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -175,7 +187,8 @@ group=0
 title=abc
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
@@ -187,7 +200,8 @@ TEST(parser_task, group_does_not_exist) {
 id=1
 group=1)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -211,7 +225,8 @@ id=1
 group=99
 group=99)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -224,7 +239,8 @@ TEST(parser_task, group_not_a_number) {
 id=1
 group=a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -237,7 +253,8 @@ TEST(parser_task, group_number_and_garbage) {
 id=1
 group=0a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -262,7 +279,8 @@ project=0
 group=0
 title=abc)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result,
@@ -288,7 +306,8 @@ project=0
 group=99
 title=abc)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result,
@@ -314,7 +333,8 @@ project=42
 group=0
 title=abc)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result,
@@ -340,7 +360,8 @@ project=42
 group=99
 title=abc)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -353,7 +374,8 @@ TEST(parser_task, title_missing) {
 [task]
 id=1)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -366,7 +388,8 @@ TEST(parser_task, title_empty) {
 id=1
 title=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -382,7 +405,8 @@ id=1
 title=abc
 title=def)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -396,7 +420,8 @@ id=1
 title=abc
 description=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
@@ -410,7 +435,8 @@ title=abc
 description=def
 description=ghi)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -425,7 +451,8 @@ id=1
 title=abc
 status=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -440,7 +467,8 @@ id=1
 title=abc
 status=not a status)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -456,7 +484,8 @@ title=abc
 status=backlog
 status=selected)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -471,7 +500,8 @@ id=1
 title=abc
 status=backlog)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(
@@ -487,7 +517,8 @@ id=1
 title=abc
 status=selected)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(
@@ -503,7 +534,8 @@ id=1
 title=abc
 status=progress)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(
@@ -519,7 +551,8 @@ id=1
 title=abc
 status=review)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result,
@@ -534,7 +567,8 @@ id=1
 title=abc
 status=done)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result,
@@ -549,7 +583,8 @@ id=1
 title=abc
 status=discarded)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(
@@ -565,7 +600,8 @@ id=1
 title=abc
 after=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -580,7 +616,8 @@ id=1
 title=abc
 after=no month separator)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -595,7 +632,8 @@ id=1
 title=abc
 after=a.)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -609,7 +647,8 @@ id=1
 title=abc
 after=1999a.)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -624,7 +663,8 @@ id=1
 title=abc
 after=1999.)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -639,7 +679,8 @@ id=1
 title=abc
 after=1999.a.)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -654,7 +695,8 @@ id=1
 title=abc
 after=1999.2a.)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -669,7 +711,8 @@ id=1
 title=abc
 after=1999.02.a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -684,7 +727,8 @@ id=1
 title=abc
 after=1999.02.29a)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -699,7 +743,8 @@ id=1
 title=abc
 after=1999.02.29)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -715,7 +760,8 @@ title=abc
 after=1999.02.28
 after=1970.01.01)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -730,7 +776,8 @@ id=1
 title=abc
 labels=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
@@ -755,7 +802,8 @@ id=1
 title=abc
 labels=10,15,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(
@@ -775,7 +823,8 @@ id=1
 title=abc
 labels=10,a,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -790,7 +839,8 @@ id=1
 title=abc
 labels=10,,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -805,7 +855,8 @@ id=1
 title=abc
 labels=10,0a,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -821,7 +872,8 @@ id=1
 title=abc
 labels=10,0,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -838,7 +890,8 @@ title=abc
 labels=10
 labels=42,99)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -853,7 +906,8 @@ id=1
 title=abc
 dependencies=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
@@ -870,7 +924,8 @@ id=1
 title=abc
 dependencies=10,15,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result,
@@ -888,7 +943,8 @@ id=1
 title=abc
 dependencies=10,a,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -903,7 +959,8 @@ id=1
 title=abc
 dependencies=10,,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -918,7 +975,8 @@ id=1
 title=abc
 dependencies=10,0a,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -934,7 +992,8 @@ id=1
 title=abc
 dependencies=10,0,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -952,7 +1011,8 @@ title=abc
 dependencies=10
 dependencies=42,99)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -967,7 +1027,8 @@ id=1
 title=abc
 requirements=)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
@@ -999,7 +1060,8 @@ id=1
 title=abc
 requirements=10,15,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(
@@ -1022,7 +1084,8 @@ id=1
 title=abc
 requirements=10,a,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -1037,7 +1100,8 @@ id=1
 title=abc
 requirements=10,,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -1052,7 +1116,8 @@ id=1
 title=abc
 requirements=10,0a,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -1068,7 +1133,8 @@ id=1
 title=abc
 requirements=10,0,    20)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(
@@ -1086,7 +1152,8 @@ title=abc
 requirements=10
 requirements=42,99)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -1100,7 +1167,8 @@ TEST(parser_task, minimal_valid) {
 id=1
 title=abc)";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
@@ -1155,7 +1223,8 @@ dependencies=2,3,5,7
 requirements=10,20,15
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(
@@ -1231,7 +1300,8 @@ dependencies=2,3,5,7
 requirements=10,20,15
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_TRUE(result) << format(result.error());
   expect_eq(

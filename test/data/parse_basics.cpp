@@ -10,7 +10,8 @@ import stl;
 TEST(parser, empty) {
   std::string_view input;
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   EXPECT_TRUE(result);
   expect_eq(**result, data::tstate{});
@@ -24,7 +25,8 @@ TEST(parser, empty_lines) {
 
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   EXPECT_TRUE(result);
   expect_eq(**result, data::tstate{});
@@ -33,7 +35,8 @@ TEST(parser, empty_lines) {
 TEST(parser, unknown_header) {
   std::string_view input = "[not a valid header name]";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -43,7 +46,8 @@ TEST(parser, unknown_header) {
 TEST(parser, pair_outside_header) {
   std::string_view input = "key=value";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -53,7 +57,8 @@ TEST(parser, pair_outside_header) {
 TEST(parser, invalid_line) {
   std::string_view input = "key equals value";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -63,7 +68,8 @@ TEST(parser, invalid_line) {
 TEST(parser, multiline_at_eof) {
   std::string_view input = "key=<<<";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -78,7 +84,8 @@ TEST(parser, multiline_no_terminator) {
 
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
@@ -99,7 +106,8 @@ Hello
 ID=2
 )";
 
-  std::expected<data::tstate *, data::tparse_error> result = data::parse(input);
+  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+      data::parse(input);
 
   ASSERT_FALSE(result);
   expect_eq(result.error(),
