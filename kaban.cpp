@@ -26,8 +26,10 @@ int main(int argc, const char *argv[]) {
 
     return 1;
   }
-  // data::set_state(std::unique_ptr<data::tstate>{result.value()});
-  data::set_state(result.value().release());
+  if (!data::set_state(std::move(result).value())) {
+    std::cerr << "Failed to store the state\n";
+    return 1;
+  }
 
   int tab = 0;
   std::vector<std::string> labels{"Board", "Configuration"};

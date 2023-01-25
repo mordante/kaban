@@ -52,8 +52,8 @@ set(MODULE_FLAGS
 	--precompile
 )
 
-add_library(state state.cpp)
-add_dependencies(state data stl)
+#add_library(state state.cpp)
+#add_dependencies(state data stl)
 
 add_custom_command(
 	OUTPUT ${PREBUILT_MODULE_PATH}/stl.pcm
@@ -77,7 +77,7 @@ add_custom_command(
 	DEPENDS
 		${PREBUILT_MODULE_PATH}/stl.pcm
 		${CMAKE_CURRENT_SOURCE_DIR}/data.cppm
-		${CMAKE_CURRENT_SOURCE_DIR}/state.cpp
+		#${CMAKE_CURRENT_SOURCE_DIR}/state.cpp
 )
 add_custom_target(data
 	DEPENDS
@@ -112,7 +112,7 @@ target_link_libraries(kaban
 		${PREBUILT_MODULE_PATH}/gui-helpers.pcm
 		${PREBUILT_MODULE_PATH}/gui.pcm
 		${PREBUILT_MODULE_PATH}/stl.pcm
-		state
+		#state
 		ftxui::screen
 		ftxui::dom
 		ftxui::component
