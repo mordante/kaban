@@ -28,15 +28,15 @@ enum class tcolor {
 struct tlabel {
   std::size_t id;
   std::string name;
-  std::string description;
-  tcolor color;
+  std::string description{};
+  tcolor color{tcolor::black};
 };
 
 struct tproject {
   std::size_t id;
   std::string name;
-  std::string description;
-  tcolor color;
+  std::string description{};
+  tcolor color{tcolor::black};
   bool active{true};
 };
 
@@ -44,8 +44,8 @@ struct tgroup {
   std::size_t id;
   std::size_t project{0};
   std::string name;
-  std::string description;
-  tcolor color;
+  std::string description{};
+  tcolor color{tcolor::black};
   bool active{true};
 };
 
@@ -64,12 +64,12 @@ struct ttask {
   std::size_t project{0};
   std::size_t group{0};
   std::string title;
-  std::string description;
+  std::string description{};
   tstatus status{tstatus::backlog};
-  std::optional<std::chrono::year_month_day> after;
-  std::vector<std::size_t> labels;
-  std::vector<std::size_t> dependencies;
-  std::vector<std::size_t> requirements;
+  std::optional<std::chrono::year_month_day> after{};
+  std::vector<std::size_t> labels{};
+  std::vector<std::size_t> dependencies{};
+  std::vector<std::size_t> requirements{};
 };
 
 struct tstate {
@@ -212,7 +212,7 @@ public:
     case '\n':
       ++next_.cursor_;
       ++next_.line_;
-      return tresult{tresult::empty};
+      return tresult{tresult::empty, {}};
 
     case '[':
       return parse_header();
@@ -631,8 +631,7 @@ parse_element(tfield &field, std::string_view input, int line_no) {
 template <class Container, class Projection, class T>
 std::optional<data::tparse_error>
 validate_unique(const Container &container, Projection projection,
-                const T &value, const data::tstate &state,
-                std::string_view field, int line_no)
+                const T &value, std::string_view field, int line_no)
 
 {
 #if 0
@@ -653,8 +652,7 @@ validate_unique(const Container &container, Projection projection,
 template <class Container, class Projection, class T>
 std::optional<data::tparse_error>
 validate_exists(const Container &container, Projection projection,
-                const T &value, const data::tstate &state,
-                std::string_view field, int line_no) {
+                const T &value, std::string_view field, int line_no) {
 #if 0
   // Contains hasn't been implemented yet.
   if (std::ranges::contains(container, value, projection))
@@ -686,32 +684,32 @@ validate_id(const tfield &field, const data::tstate &state, int line_no) {
   switch (id.target) {
   case tid::ttarget::label:
     return id.self ? validate_unique(state.labels, &data::tlabel::id, *id.value,
-                                     state, field.name, line_no)
+                                     field.name, line_no)
                    : validate_exists(state.labels, &data::tlabel::id, *id.value,
-                                     state, field.name, line_no);
+                                     field.name, line_no);
 
   case tid::ttarget::project:
     return id.self ? validate_unique(state.projects, &data::tproject::id,
-                                     *id.value, state, field.name, line_no)
+                                     *id.value, field.name, line_no)
                    : validate_exists(state.projects, &data::tproject::id,
-                                     *id.value, state, field.name, line_no);
+                                     *id.value, field.name, line_no);
 
   case tid::ttarget::group:
     return id.self ? validate_unique(state.groups, &data::tgroup::id, *id.value,
-                                     state, field.name, line_no)
+                                     field.name, line_no)
                    : validate_exists(state.groups, &data::tgroup::id, *id.value,
-                                     state, field.name, line_no);
+                                     field.name, line_no);
 
   case tid::ttarget::task:
     return id.self ? validate_unique(state.tasks, &data::ttask::id, *id.value,
-                                     state, field.name, line_no)
+                                     field.name, line_no)
                    : validate_exists(state.tasks, &data::ttask::id, *id.value,
-                                     state, field.name, line_no);
+                                     field.name, line_no);
   }
 }
 
-std::optional<data::tparse_error>
-validate_string(const tfield &field, const data::tstate &state, int line_no) {
+std::optional<data::tparse_error> validate_string(const tfield &field,
+                                                  int line_no) {
   const auto &string = std::get<tstring>(field.value);
   if (field.requirement == tfield_requirement::mandatory && !string.value)
     return std::optional<data::tparse_error>{
@@ -721,8 +719,8 @@ validate_string(const tfield &field, const data::tstate &state, int line_no) {
   return {};
 }
 
-std::optional<data::tparse_error>
-validate_color(const tfield &field, const data::tstate &state, int line_no) {
+std::optional<data::tparse_error> validate_color(const tfield &field,
+                                                 int line_no) {
   const auto &color = std::get<tcolor>(field.value);
   if (field.requirement == tfield_requirement::mandatory && !color.value)
     return std::optional<data::tparse_error>{
@@ -732,8 +730,8 @@ validate_color(const tfield &field, const data::tstate &state, int line_no) {
   return {};
 }
 
-std::optional<data::tparse_error>
-validate_boolean(const tfield &field, const data::tstate &state, int line_no) {
+std::optional<data::tparse_error> validate_boolean(const tfield &field,
+                                                   int line_no) {
   const auto &boolean = std::get<tboolean>(field.value);
   if (field.requirement == tfield_requirement::mandatory && !boolean.value)
     return std::optional<data::tparse_error>{
@@ -743,8 +741,8 @@ validate_boolean(const tfield &field, const data::tstate &state, int line_no) {
   return {};
 }
 
-std::optional<data::tparse_error>
-validate_status(const tfield &field, const data::tstate &state, int line_no) {
+std::optional<data::tparse_error> validate_status(const tfield &field,
+                                                  int line_no) {
   const auto &status = std::get<tstatus>(field.value);
   if (field.requirement == tfield_requirement::mandatory && !status.value)
     return std::optional<data::tparse_error>{
@@ -754,8 +752,8 @@ validate_status(const tfield &field, const data::tstate &state, int line_no) {
   return {};
 }
 
-std::optional<data::tparse_error>
-validate_date(const tfield &field, const data::tstate &state, int line_no) {
+std::optional<data::tparse_error> validate_date(const tfield &field,
+                                                int line_no) {
   const auto &date = std::get<tdate>(field.value);
   if (field.requirement == tfield_requirement::mandatory && !date.value)
     return std::optional<data::tparse_error>{
@@ -785,7 +783,7 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
   case tid_list::ttarget::label:
     for (const auto value : *id_list.value) {
       std::optional<data::tparse_error> error = validate_exists(
-          state.labels, &data::tlabel::id, value, state, field.name, line_no);
+          state.labels, &data::tlabel::id, value, field.name, line_no);
       if (error)
         return error;
     }
@@ -793,9 +791,8 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
 
   case tid_list::ttarget::project:
     for (const auto value : *id_list.value) {
-      std::optional<data::tparse_error> error =
-          validate_exists(state.projects, &data::tproject::id, value, state,
-                          field.name, line_no);
+      std::optional<data::tparse_error> error = validate_exists(
+          state.projects, &data::tproject::id, value, field.name, line_no);
       if (error)
         return error;
     }
@@ -804,7 +801,7 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
   case tid_list::ttarget::group:
     for (const auto value : *id_list.value) {
       std::optional<data::tparse_error> error = validate_exists(
-          state.groups, &data::tgroup::id, value, state, field.name, line_no);
+          state.groups, &data::tgroup::id, value, field.name, line_no);
       if (error)
         return error;
     }
@@ -813,7 +810,7 @@ validate_id_list(const tfield &field, const data::tstate &state, int line_no) {
   case tid_list::ttarget::task:
     for (const auto value : *id_list.value) {
       std::optional<data::tparse_error> error = validate_exists(
-          state.tasks, &data::ttask::id, value, state, field.name, line_no);
+          state.tasks, &data::ttask::id, value, field.name, line_no);
       if (error)
         return error;
     }
@@ -830,15 +827,15 @@ validate_field(const tfield &field, const data::tstate &state, int line_no) {
   case tfield_type::id:
     return validate_id(field, state, line_no);
   case tfield_type::string:
-    return validate_string(field, state, line_no);
+    return validate_string(field, line_no);
   case tfield_type::color:
-    return validate_color(field, state, line_no);
+    return validate_color(field, line_no);
   case tfield_type::boolean:
-    return validate_boolean(field, state, line_no);
+    return validate_boolean(field, line_no);
   case tfield_type::status:
-    return validate_status(field, state, line_no);
+    return validate_status(field, line_no);
   case tfield_type::date:
-    return validate_date(field, state, line_no);
+    return validate_date(field, line_no);
   case tfield_type::id_list:
     return validate_id_list(field, state, line_no);
   }
@@ -849,7 +846,7 @@ std::optional<data::tparse_error>
 parse_record(data::tstate &state, parser &parser, std::span<tfield> fields) {
 
   // *** PARSE ***
-  int line = parser.line();
+  int line_number = parser.line();
   bool done = false;
   do {
 
@@ -894,7 +891,7 @@ parse_record(data::tstate &state, parser &parser, std::span<tfield> fields) {
 
   for (const auto &field : fields) {
     std::optional<data::tparse_error> error =
-        validate_field(field, state, line);
+        validate_field(field, state, line_number);
     if (error)
       return error;
   }
@@ -1104,7 +1101,8 @@ parse(std::string_view input) {
     }
   }
 
-  return std::move(state);
+  // hmm false positive in Clang?
+  // std::unreachable();
 }
 
 } // namespace data

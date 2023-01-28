@@ -15,6 +15,33 @@ set(CMAKE_CXX_EXTENSIONS NO)
 add_compile_options(-fexperimental-library)
 add_link_options(-fexperimental-library)
 
+set(COMPILER_DIAGNOSTICS
+	-Werror
+    -Weverything
+    -Wno-exit-time-destructors # Don't care about exit time destructors.
+    -Wno-padded # Don't care about the padding.
+	-Wno-missing-prototypes # False postives with export.
+	-Wno-global-constructors
+	-Wno-weak-vtables
+    # Ignore all compatibility with older C++ standards.
+    -Wno-pre-c++20-compat
+    -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
+    -Wno-c++11-compat
+    -Wno-c++14-compat
+    -Wno-c++17-compat
+    -Wno-c++20-compat
+    # TODO Investigate whether the issues are real or false positives.
+    -Wno-unsafe-buffer-usage
+	# TODO in a different commit
+	-Wno-deprecated-this-capture
+	# TODO enable after module build is more stable
+	-Wno-date-time
+	-Wno-unused-command-line-argument
+)
+add_compile_options(${COMPILER_DIAGNOSTICS})
+
+
 set(PREBUILT_MODULE_PATH ${CMAKE_BINARY_DIR}/modules)
 file(MAKE_DIRECTORY ${PREBUILT_MODULE_PATH})
 add_compile_options(
@@ -23,28 +50,8 @@ add_compile_options(
 set(MODULE_FLAGS
 	${CMAKE_CXX_COMPILER}
 	${CMAKE_CXX_FLAGS}
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#	-O0 -g
+	${COMPILER_DIAGNOSTICS}
+	-O0 -g
 	-std=c++2b
 	-stdlib=libc++
 	-fexperimental-library

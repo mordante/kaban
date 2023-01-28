@@ -27,8 +27,7 @@ add_executable(tests
 	data/parse_label.cpp
 	data/parse_project.cpp
 	data/parse_task.cpp
-	# TODO REENABLE and fix
-	#data/status.cpp
+	data/status.cpp
 )
 add_dependencies(tests
 	helpers

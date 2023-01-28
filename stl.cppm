@@ -77,6 +77,7 @@ using std::string;
 using std::string_view;
 using std::unexpected;
 using std::unique_ptr;
+using std::unreachable;
 using std::variant;
 using std::vector;
 using std::operator<<;

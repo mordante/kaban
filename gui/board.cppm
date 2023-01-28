@@ -92,9 +92,9 @@ enum tcolumn_index {
   discarded
 };
 
-constexpr std::size_t column_count = 8;
+inline constexpr std::size_t column_count = 8;
 
-constexpr std::array<std::string_view, column_count> column_names = {
+inline constexpr std::array<std::string_view, column_count> column_names = {
     "Inactive",    "Blocked",   "Backlog", "Selected",
     "In progress", "In review", "Done",    "Discarded"};
 
@@ -184,7 +184,7 @@ private:
       const std::array<ftxui::Components, column_count> &columns) {
 
     ftxui::Components column_buttons;
-    for (int i = 0; i < column_count; ++i) // zip view
+    for (std::size_t i = 0; i < column_count; ++i) // zip view
       column_buttons.emplace_back(
           ftxui::Checkbox(std::format("{} ({}/{}))", column_names[i],
                                       columns[i].size(), tickets_.size()),
@@ -212,7 +212,7 @@ private:
   ftxui::Component
   create_columns(std::array<ftxui::Components, column_count> tickets) {
     ftxui::Components columns;
-    for (int i = 0; i < column_count; ++i) // zip view
+    for (std::size_t i = 0; i < column_count; ++i) // zip view
       columns.emplace_back(
           ftxui::Container::Vertical({std::move(tickets[i])})  //
           | ftxui::size(ftxui::WIDTH, ftxui::GREATER_THAN, 19) //
@@ -224,8 +224,6 @@ private:
   }
 
   std::vector<std::shared_ptr<tticket>> tickets_;
-
-  bool dirty_{true};
 
   bool all_visible_{false};
   bool refinement_visible_{false};

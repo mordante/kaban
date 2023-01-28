@@ -21,7 +21,7 @@ static bool is_blocked_one_dependency(data::ttask::tstatus status) {
                                 .status = data::ttask::tstatus::backlog,
                                 .dependencies = {100}}}}));
 
-  ASSERT_TRUE(static_cast<bool>(result));
+  EXPECT_TRUE(static_cast<bool>(result));
 
   return data::is_blocked(data::get_task(200));
 }
@@ -38,18 +38,26 @@ TEST(status, is_blocked_one_dependency) {
 
 static bool
 is_blocked_three_dependencies(std::array<data::ttask::tstatus, 3> status) {
-  data::set_state(std::make_unique<data::tstate>(data::tstate{
-      .tasks = {
-          data::ttask{
-              .id = 100, .title = "a", .status = status[0], .dependencies = {}},
-          data::ttask{
-              .id = 200, .title = "a", .status = status[1], .dependencies = {}},
-          data::ttask{
-              .id = 300, .title = "a", .status = status[2], .dependencies = {}},
-          data::ttask{.id = 400,
-                      .title = "b",
-                      .status = data::ttask::tstatus::backlog,
-                      .dependencies = {100, 200, 300}}}}));
+  std::expected<void, nullptr_t> result =
+      data::set_state(std::make_unique<data::tstate>(data::tstate{
+          .tasks = {data::ttask{.id = 100,
+                                .title = "a",
+                                .status = status[0],
+                                .dependencies = {}},
+                    data::ttask{.id = 200,
+                                .title = "a",
+                                .status = status[1],
+                                .dependencies = {}},
+                    data::ttask{.id = 300,
+                                .title = "a",
+                                .status = status[2],
+                                .dependencies = {}},
+                    data::ttask{.id = 400,
+                                .title = "b",
+                                .status = data::ttask::tstatus::backlog,
+                                .dependencies = {100, 200, 300}}}}));
+
+  EXPECT_TRUE(static_cast<bool>(result));
 
   return data::is_blocked(data::get_task(400));
 }
@@ -88,19 +96,22 @@ TEST(status, is_blocked_three_dependencies) {
 }
 
 static bool is_blocked_one_requirement_one_task(data::ttask::tstatus status) {
-  data::set_state(std::make_unique<data::tstate>(data::tstate{
-      .projects = {data::tproject{.id = 1, .name = "a"}},
-      .groups = {data::tgroup{.id = 10, .project = 1, .name = "a"}},
-      .tasks = {data::ttask{
-                    .id = 100,
-                    .group = 10,
-                    .title = "a",
-                    .status = status,
-                },
-                data::ttask{.id = 200,
-                            .title = "b",
-                            .status = data::ttask::tstatus::backlog,
-                            .requirements = {10}}}}));
+  std::expected<void, nullptr_t> result =
+      data::set_state(std::make_unique<data::tstate>(data::tstate{
+          .projects = {data::tproject{.id = 1, .name = "a"}},
+          .groups = {data::tgroup{.id = 10, .project = 1, .name = "a"}},
+          .tasks = {data::ttask{
+                        .id = 100,
+                        .group = 10,
+                        .title = "a",
+                        .status = status,
+                    },
+                    data::ttask{.id = 200,
+                                .title = "b",
+                                .status = data::ttask::tstatus::backlog,
+                                .requirements = {10}}}}));
+
+  EXPECT_TRUE(static_cast<bool>(result));
 
   return data::is_blocked(data::get_task(200));
 }
@@ -122,29 +133,32 @@ TEST(status, is_blocked_one_requirement_one_task) {
 
 static bool is_blocked_two_requirements_with_three_tasks(
     std::array<data::ttask::tstatus, 3> status) {
-  data::set_state(std::make_unique<data::tstate>(data::tstate{
-      .projects = {data::tproject{.id = 1, .name = "a"}},
-      .groups = {data::tgroup{.id = 10, .project = 1, .name = "a"},
-                 data::tgroup{.id = 20, .project = 1, .name = "b"}},
-      .tasks = {data::ttask{.id = 100,
-                            .group = 10,
-                            .title = "a",
-                            .status = status[0],
-                            .dependencies = {}},
-                data::ttask{.id = 200,
-                            .group = 20,
-                            .title = "a",
-                            .status = status[1],
-                            .dependencies = {}},
-                data::ttask{.id = 300,
-                            .group = 20,
-                            .title = "a",
-                            .status = status[2],
-                            .dependencies = {}},
-                data::ttask{.id = 400,
-                            .title = "b",
-                            .status = data::ttask::tstatus::backlog,
-                            .requirements = {10, 20}}}}));
+  std::expected<void, nullptr_t> result =
+      data::set_state(std::make_unique<data::tstate>(data::tstate{
+          .projects = {data::tproject{.id = 1, .name = "a"}},
+          .groups = {data::tgroup{.id = 10, .project = 1, .name = "a"},
+                     data::tgroup{.id = 20, .project = 1, .name = "b"}},
+          .tasks = {data::ttask{.id = 100,
+                                .group = 10,
+                                .title = "a",
+                                .status = status[0],
+                                .dependencies = {}},
+                    data::ttask{.id = 200,
+                                .group = 20,
+                                .title = "a",
+                                .status = status[1],
+                                .dependencies = {}},
+                    data::ttask{.id = 300,
+                                .group = 20,
+                                .title = "a",
+                                .status = status[2],
+                                .dependencies = {}},
+                    data::ttask{.id = 400,
+                                .title = "b",
+                                .status = data::ttask::tstatus::backlog,
+                                .requirements = {10, 20}}}}));
+
+  EXPECT_TRUE(static_cast<bool>(result));
 
   return data::is_blocked(data::get_task(400));
 }
@@ -187,9 +201,12 @@ TEST(status, is_blocked_after) {
 }
 
 bool is_active_project(bool active) {
-  data::set_state(std::make_unique<data::tstate>(data::tstate{
-      .projects = {data::tproject{.id = 1, .name = "a", .active = active}},
-      .tasks = {data::ttask{.id = 100, .project = 1, .title = "a"}}}));
+  std::expected<void, nullptr_t> result =
+      data::set_state(std::make_unique<data::tstate>(data::tstate{
+          .projects = {data::tproject{.id = 1, .name = "a", .active = active}},
+          .tasks = {data::ttask{.id = 100, .project = 1, .title = "a"}}}));
+
+  EXPECT_TRUE(static_cast<bool>(result));
 
   return data::is_active(data::get_task(100));
 }
@@ -200,12 +217,15 @@ TEST(status, is_active_project) {
 }
 
 bool is_active_group(bool project_active, bool group_active) {
-  data::set_state(std::make_unique<data::tstate>(data::tstate{
-      .projects = {data::tproject{
-          .id = 1, .name = "a", .active = project_active}},
-      .groups = {data::tgroup{
-          .id = 10, .project = 1, .name = "a", .active = group_active}},
-      .tasks = {data::ttask{.id = 100, .group = 10, .title = "a"}}}));
+  std::expected<void, nullptr_t> result =
+      data::set_state(std::make_unique<data::tstate>(data::tstate{
+          .projects = {data::tproject{
+              .id = 1, .name = "a", .active = project_active}},
+          .groups = {data::tgroup{
+              .id = 10, .project = 1, .name = "a", .active = group_active}},
+          .tasks = {data::ttask{.id = 100, .group = 10, .title = "a"}}}));
+
+  EXPECT_TRUE(static_cast<bool>(result));
 
   return data::is_active(data::get_task(100));
 }

@@ -5,9 +5,9 @@ import stl;
 
 // Quite often the application fails due to changes in modules not being picked
 // up properly. Enable this to force a rebuild, if needed.
-static const char *generaton = __TIME__;
+[[maybe_unused]] static const char *generaton = __TIME__;
 
-int main(int argc, const char *argv[]) {
+int main() {
   char *home = std::getenv("HOME");
   std::ifstream file{home + std::string{"/kaban"}};
 
