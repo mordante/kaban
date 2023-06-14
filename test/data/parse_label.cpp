@@ -133,7 +133,8 @@ description=)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "abc"}}});
   };
 
@@ -200,7 +201,8 @@ name=foo)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "foo"}}});
   };
 
@@ -216,7 +218,8 @@ color=red
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{.labels = {data::tlabel{1, "foo", "bar",
                                                    data::tcolor::light_red}}});

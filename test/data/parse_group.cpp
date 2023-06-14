@@ -249,7 +249,8 @@ description=)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
                                      .groups = {data::tgroup{1, 42, "abc"}}});
   };
@@ -407,7 +408,8 @@ name=foo)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.projects = {data::tproject{42, "test"}},
                                      .groups = {data::tgroup{1, 42, "foo"}}});
   };
@@ -430,7 +432,8 @@ active=false
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.projects = {data::tproject{42, "test"}},

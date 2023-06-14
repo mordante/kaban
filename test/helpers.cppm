@@ -34,23 +34,16 @@ ostream &operator<<(ostream &os, optional<chrono::year_month_day> date) {
 }
 } // namespace std
 
-export template <class T, class... Args>
-void expect_true(T &&v, Args &&...args) {
-  (boost::ut::expect(static_cast<bool>(v)) << ... << args);
+export template <class T> auto expect_true(T &&v) {
+  return boost::ut::expect(static_cast<bool>(v));
 }
 
-export template <class T> auto assert_true(T &&v) {
-  using namespace boost::ut::operators;
-  return boost::ut::expect((static_cast<bool>(v)) >> boost::ut::fatal);
-}
-
-export template <class T> void expect_false(T &&v) {
-  boost::ut::expect(!static_cast<bool>(v));
+export template <class T> auto expect_false(T &&v) {
+  return boost::ut::expect(!static_cast<bool>(v));
 }
 
 export template <class T> void assert_false(T &&v) {
-  using namespace boost::ut::operators;
-  boost::ut::expect((!static_cast<bool>(v)) >> boost::ut::fatal);
+  boost::ut::expect(!static_cast<bool>(v)) << boost::ut::fatal;
 }
 
 export void expect_eq(const data::tparse_error &lhs,

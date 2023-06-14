@@ -133,7 +133,8 @@ description=)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.projects = {data::tproject{1, "abc"}}});
   };
 
@@ -255,7 +256,8 @@ name=foo)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.projects = {data::tproject{1, "foo"}}});
   };
 
@@ -272,7 +274,8 @@ active=false
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.projects = {data::tproject{
                                          1, "foo", "bar",
                                          data::tcolor::light_red, false}}});
