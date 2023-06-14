@@ -1,9 +1,8 @@
 module;
-// #include "state.hpp"
 #include <algorithm>
 
 export module data;
-import stl;
+import std;
 
 export namespace data {
 enum class tcolor {
@@ -96,7 +95,7 @@ public:
   tsingleton &operator=(const tsingleton &) = delete;
   tsingleton &operator=(tsingleton &&) = delete;
 
-  [[nodiscard]] std::expected<void, nullptr_t> set(std::unique_ptr<T> &&data) {
+  [[nodiscard]] std::expected<void, std::nullptr_t> set(std::unique_ptr<T> &&data) {
     if (!data)
       return std::unexpected(nullptr);
     data_ = std::move(data);
@@ -116,7 +115,7 @@ static tsingleton<data::tstate> state_singleton;
 export namespace data {
 [[nodiscard]] tstate &get_state() { return state_singleton.get(); }
 
-[[nodiscard]] std::expected<void, nullptr_t>
+[[nodiscard]] std::expected<void, std::nullptr_t>
 set_state(std::unique_ptr<data::tstate> &&state) {
   return state_singleton.set(std::move(state));
 }

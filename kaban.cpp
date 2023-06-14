@@ -1,7 +1,7 @@
 import data;
 import ftxui;
 import gui;
-import stl;
+import std;
 
 // Quite often the application fails due to changes in modules not being picked
 // up properly. Enable this to force a rebuild, if needed.

@@ -1,7 +1,7 @@
 export module gui:helpers;
 import ftxui;
 import data;
-import stl;
+import std;
 
 // TODO Tune foreground colours further.
 export namespace detail {

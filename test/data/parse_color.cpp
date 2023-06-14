@@ -2,7 +2,7 @@
 
 import helpers;
 import data;
-import stl;
+import std;
 
 // A label is the easiest to validate the parsed colors.
 

@@ -1,11 +1,8 @@
-module;
-#include <algorithm>
-
 export module gui:board;
 import :helpers;
 import ftxui;
 import data;
-import stl;
+import std;
 
 export namespace detail {
 
@@ -199,7 +196,7 @@ private:
                 std::format("Refinement ({}/{})",
                             std::accumulate(
                                 columns.begin(), columns.begin() + progress, 0,
-                                [](size_t init, const auto &column) {
+                                [](std::size_t init, const auto &column) {
                                   return init + column.size();
                                 }),
                             tickets_.size()),

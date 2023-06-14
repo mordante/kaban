@@ -3,7 +3,7 @@ import :configuration;
 import :board;
 
 import ftxui;
-import stl;
+import std;
 
 export namespace gui {
 

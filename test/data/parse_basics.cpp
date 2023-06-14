@@ -2,7 +2,7 @@
 
 import helpers;
 import data;
-import stl;
+import std;
 
 // line numbers for multiline and afterwards
 // implement colors.

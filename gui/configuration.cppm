@@ -1,12 +1,9 @@
-module;
-#include <algorithm>
-
 export module gui:configuration;
 import :helpers;
 
 import ftxui;
 import data;
-import stl;
+import std;
 
 static ftxui::Element create_title(std::size_t id, const std::string &name,
                                    data::tcolor color) {
