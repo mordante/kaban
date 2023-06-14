@@ -12,8 +12,6 @@ include(ExternalProjects)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
-add_compile_options(-fexperimental-library)
-add_link_options(-fexperimental-library)
 
 set(COMPILER_DIAGNOSTICS
 	-Werror
@@ -54,7 +52,6 @@ set(MODULE_FLAGS
 	-O0 -g
 	-std=c++2b
 	-stdlib=libc++
-	-fexperimental-library
 	-fprebuilt-module-path=${PREBUILT_MODULE_PATH}
 	--precompile
 )
