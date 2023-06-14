@@ -1,100 +1,108 @@
-#include <gtest/gtest.h>
+import ut_helpers;
 
-import helpers;
 import data;
+
+import boost.ut;
+
 import std;
+
+namespace {
+using namespace boost::ut::literals;
 
 // line numbers for multiline and afterwards
 // implement colors.
 
-TEST(parser, empty) {
-  std::string_view input;
+boost::ut::suite<"parser"> suite = [] {
+  "empty"_test = [] {
+    std::string_view input;
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  EXPECT_TRUE(result);
-  expect_eq(**result, data::tstate{});
-}
+    boost::ut::expect(bool(result));
+    expect_eq(**result, data::tstate{});
+  };
 
-TEST(parser, empty_lines) {
-  std::string_view input = R"(
+  "empty_lines"_test = [] {
+    std::string_view input = R"(
 
-
-
-
-)";
-
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
-
-  EXPECT_TRUE(result);
-  expect_eq(**result, data::tstate{});
-}
-
-TEST(parser, unknown_header) {
-  std::string_view input = "[not a valid header name]";
-
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
-
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{1, input, "found unknown header"});
-}
-
-TEST(parser, pair_outside_header) {
-  std::string_view input = "key=value";
-
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
-
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{1, input, "value is not attached to a header"});
-}
-
-TEST(parser, invalid_line) {
-  std::string_view input = "key equals value";
-
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
-
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{1, input, "value contains no '=' separator"});
-}
-
-TEST(parser, multiline_at_eof) {
-  std::string_view input = "key=<<<";
-
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
-
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{1, input,
-                               "value ends with start of multiline marker"});
-}
-
-TEST(parser, multiline_no_terminator) {
-  std::string_view input = R"(key=<<<
 
 
 
 )";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{
-                1, input, "end of file before multiline terminator was found"});
-}
+    expect_true(result);
+    expect_eq(**result, data::tstate{});
+  };
 
-TEST(parser, multiline_line_count) {
-  std::string_view input = R"(
+  "unknown_header"_test = [] {
+    std::string_view input = "[not a valid header name]";
+
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
+
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{1, input, "found unknown header"});
+  };
+
+  "pair_outside_header"_test = [] {
+    std::string_view input = "key=value";
+
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
+
+    assert_false(result);
+    expect_eq(
+        result.error(),
+        data::tparse_error{1, input, "value is not attached to a header"});
+  };
+
+  "invalid_line"_test = [] {
+    std::string_view input = "key equals value";
+
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
+
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{1, input, "value contains no '=' separator"});
+  };
+
+  "multiline_at_eof"_test = [] {
+    std::string_view input = "key=<<<";
+
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
+
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{1, input,
+                                 "value ends with start of multiline marker"});
+  };
+
+  "multiline_no_terminator"_test = [] {
+    std::string_view input = R"(key=<<<
+
+
+
+)";
+
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
+
+    assert_false(result);
+    expect_eq(
+        result.error(),
+        data::tparse_error{
+            1, input, "end of file before multiline terminator was found"});
+  };
+
+  "multiline_line_count"_test = [] {
+    std::string_view input = R"(
 [task]
 id=1
 title=hello
@@ -106,10 +114,12 @@ Hello
 ID=2
 )";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{10, "ID=2", "invalid field name"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{10, "ID=2", "invalid field name"});
+  };
+};
+} // namespace

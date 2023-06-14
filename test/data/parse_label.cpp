@@ -1,137 +1,144 @@
-#include <gtest/gtest.h>
+import ut_helpers;
 
-import helpers;
 import data;
+
+import boost.ut;
+
 import std;
 
-TEST(parser_label, id_missing) {
-  std::string_view input = R"(
+namespace {
+
+using namespace boost::ut::literals;
+
+boost::ut::suite<"parser_label"> suite = [] {
+  "id_missing"_test = [] {
+    std::string_view input = R"(
 [label])";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{2, "", "missing mandatory field »id«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{2, "", "missing mandatory field »id«"});
+  };
 
-TEST(parser_label, id_zero) {
-  std::string_view input = R"(
+  "id_zero"_test = [] {
+    std::string_view input = R"(
 [label]
 id=0)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(
-      result.error(),
-      data::tparse_error{
-          3, "0", "zero is not a valid value for mandatory id field »id«"});
-}
+    assert_false(result);
+    expect_eq(
+        result.error(),
+        data::tparse_error{
+            3, "0", "zero is not a valid value for mandatory id field »id«"});
+  };
 
-TEST(parser_label, id_duplicate) {
-  std::string_view input = R"(
+  "id_duplicate"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 id=1)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{4, "1", "duplicate entry for field »id«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{4, "1", "duplicate entry for field »id«"});
+  };
 
-TEST(parser_label, id_not_a_number) {
-  std::string_view input = R"(
+  "id_not_a_number"_test = [] {
+    std::string_view input = R"(
 [label]
 id=a)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{3, "a", "invalid number for field »id«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{3, "a", "invalid number for field »id«"});
+  };
 
-TEST(parser_label, id_number_and_garbage) {
-  std::string_view input = R"(
+  "id_number_and_garbage"_test = [] {
+    std::string_view input = R"(
 [label]
 id=0a)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(
-      result.error(),
-      data::tparse_error{3, "0a", "number contains non-digits for field »id«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{3, "0a",
+                                 "number contains non-digits for field »id«"});
+  };
 
-TEST(parser_label, name_missing) {
-  std::string_view input = R"(
+  "name_missing"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{2, "", "missing mandatory field »name«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{2, "", "missing mandatory field »name«"});
+  };
 
-TEST(parser_label, name_empty) {
-  std::string_view input = R"(
+  "name_empty"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{4, "",
-                               "an empty string is not a valid value for "
-                               "mandatory string field »name«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{4, "",
+                                 "an empty string is not a valid value for "
+                                 "mandatory string field »name«"});
+  };
 
-TEST(parser_label, name_duplicate) {
-  std::string_view input = R"(
+  "name_duplicate"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=abc
 name=def)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{5, "def", "duplicate entry for field »name«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{5, "def", "duplicate entry for field »name«"});
+  };
 
-TEST(parser_label, description_empty) {
-  std::string_view input = R"(
+  "description_empty"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=abc
 description=)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_TRUE(result) << format(result.error());
-  expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "abc"}}});
-}
+    assert_true(result) << [&] { return format(result.error()); };
+    expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "abc"}}});
+  };
 
-TEST(parser_label, description_duplicate) {
-  std::string_view input = R"(
+  "description_duplicate"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=abc
@@ -139,33 +146,34 @@ description=This is the first description.
 description=This is the second description.
 )";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{6, "This is the second description.",
-                               "duplicate entry for field »description«"});
-}
+    assert_false(result);
+    expect_eq(result.error(),
+              data::tparse_error{6, "This is the second description.",
+                                 "duplicate entry for field »description«"});
+  };
 
-TEST(parser_label, color_empty) {
-  std::string_view input = R"(
+  "color_empty"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=abc
 description=def
 color=)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(result.error(),
-            data::tparse_error{6, "", "invalid color value for field »color«"});
-}
+    assert_false(result);
+    expect_eq(
+        result.error(),
+        data::tparse_error{6, "", "invalid color value for field »color«"});
+  };
 
-TEST(parser_label, color_duplicate) {
-  std::string_view input = R"(
+  "color_duplicate"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=abc
@@ -174,30 +182,30 @@ color=red
 color=green
 )";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_FALSE(result);
-  expect_eq(
-      result.error(),
-      data::tparse_error{7, "green", "duplicate entry for field »color«"});
-}
+    assert_false(result);
+    expect_eq(
+        result.error(),
+        data::tparse_error{7, "green", "duplicate entry for field »color«"});
+  };
 
-TEST(parser_label, minimal_valid) {
-  std::string_view input = R"(
+  "minimal_valid"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=foo)";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_TRUE(result) << format(result.error());
-  expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "foo"}}});
-}
+    assert_true(result) << [&] { return format(result.error()); };
+    expect_eq(**result, data::tstate{.labels = {data::tlabel{1, "foo"}}});
+  };
 
-TEST(parser_label, all_fields) {
-  std::string_view input = R"(
+  "all_fields"_test = [] {
+    std::string_view input = R"(
 [label]
 id=1
 name=foo
@@ -205,11 +213,14 @@ description=bar
 color=red
 )";
 
-  std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
-      data::parse(input);
+    std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
+        data::parse(input);
 
-  ASSERT_TRUE(result) << format(result.error());
-  expect_eq(**result,
-            data::tstate{.labels = {data::tlabel{1, "foo", "bar",
-                                                 data::tcolor::light_red}}});
-}
+    assert_true(result) << [&] { return format(result.error()); };
+    expect_eq(**result,
+              data::tstate{.labels = {data::tlabel{1, "foo", "bar",
+                                                   data::tcolor::light_red}}});
+  };
+};
+
+} // namespace

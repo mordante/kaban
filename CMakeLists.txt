@@ -50,9 +50,10 @@ set(COMPILER_DIAGNOSTICS
 	-Wno-read-modules-implicitly
 	-Wno-date-time
 	-Wno-unused-command-line-argument
-	-Wno-undef # needed for gtest
-	-Wno-reserved-identifier # needed for gtest
-	-Wno-deprecated # needed for gtest
+	-Wno-ctad-maybe-unsupported # boost::ut
+	-Wno-reserved-identifier # boost::ut
+	-Wno-undef # boost::ut
+    -Wno-deprecated # libc++
 )
 add_compile_options(${COMPILER_DIAGNOSTICS})
 

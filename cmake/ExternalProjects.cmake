@@ -1,22 +1,6 @@
 include(FetchContent)
 
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.12.1
-)
-FetchContent_GetProperties(googletest)
-if(NOT googletest_POPULATED)
-  FetchContent_Populate(googletest)
-  set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
-  add_subdirectory(
-	  ${googletest_SOURCE_DIR}
-	  ${googletest_BINARY_DIR}
-	  EXCLUDE_FROM_ALL
-  )
-endif()
-
-FetchContent_Declare(
   ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
   GIT_TAG v4.1.1
@@ -25,6 +9,21 @@ FetchContent_GetProperties(ftxui)
 if(NOT ftxui_POPULATED)
   FetchContent_Populate(ftxui)
   add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+
+set(BOOST_UT_ALLOW_CPM_USE OFF)
+FetchContent_Declare(
+	ut
+    GIT_REPOSITORY https://github.com/mordante/ut.git
+	# GIT_REPOSITORY https://github.com/boost-ext/ut
+	GIT_TAG modular_non_header_build
+	GIT_SHALLOW    TRUE
+)
+FetchContent_GetProperties(ut)
+if(NOT boost_ut_POPULATED)
+  FetchContent_Populate(ut)
+  add_subdirectory(${ut_SOURCE_DIR} ${ut_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
 FetchContent_Declare(
