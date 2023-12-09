@@ -52,6 +52,8 @@ set(COMPILER_DIAGNOSTICS
     -Wno-unsafe-buffer-usage
 	# TODO in a different commit
 	-Wno-deprecated-this-capture
+	# TODO Investigate whether this should be fixed
+	-Wno-switch-default
 	# TODO enable after module build is more stable
 	-Wno-read-modules-implicitly
 	-Wno-date-time

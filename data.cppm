@@ -72,10 +72,10 @@ struct ttask {
 };
 
 struct tstate {
-  std::vector<tlabel> labels;
-  std::vector<tproject> projects;
-  std::vector<tgroup> groups;
-  std::vector<ttask> tasks;
+  std::vector<tlabel> labels{};
+  std::vector<tproject> projects{};
+  std::vector<tgroup> groups{};
+  std::vector<ttask> tasks{};
 };
 
 struct tparse_error {
@@ -323,7 +323,7 @@ enum class tfield_requirement { mandatory, optional };
 
 struct tid {
   enum class ttarget { label, project, group, task };
-  std::optional<std::size_t> value;
+  std::optional<std::size_t> value{};
   ttarget target;
   bool self;
 };
@@ -350,7 +350,7 @@ struct tdate {
 
 struct tid_list {
   enum class ttarget { label, project, group, task };
-  std::optional<std::vector<std::size_t>> value;
+  std::optional<std::vector<std::size_t>> value{};
   ttarget target;
   bool self;
 };
