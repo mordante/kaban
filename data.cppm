@@ -1,6 +1,3 @@
-module;
-#include <algorithm>
-
 export module data;
 import std;
 
