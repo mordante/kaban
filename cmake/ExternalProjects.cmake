@@ -17,7 +17,7 @@ FetchContent_Declare(
 	ut
     GIT_REPOSITORY https://github.com/mordante/ut.git
 	# GIT_REPOSITORY https://github.com/boost-ext/ut
-	GIT_TAG modular_non_header_build
+	GIT_TAG modular_non_header_build-rebased
 	GIT_SHALLOW    TRUE
 )
 FetchContent_GetProperties(ut)
