@@ -72,13 +72,10 @@ private:
 
 template <class G, class E>
 static std::vector<std::shared_ptr<G>> load(const E &elements) {
-  // TODO use ranges::to
-  std::vector<std::shared_ptr<G>> result;
-  for (const auto &element : elements)
-    result.emplace_back(
-        // fails with __builtin_operator_new
-        std::make_shared<G>(std::addressof(element)));
-  return result;
+  return elements | std::views::transform([](const auto &element) {
+           return std::make_shared<G>(std::addressof(element));
+         }) |
+         std::ranges::to<std::vector>();
 }
 
 template <class E>
