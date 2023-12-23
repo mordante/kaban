@@ -104,7 +104,8 @@ title=abc
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
   };
 
@@ -198,7 +199,8 @@ title=abc
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
   };
 
@@ -292,7 +294,8 @@ title=abc)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{.projects = {data::tproject{42, "test project"}},
                            .groups = {data::tgroup{99, 42, "test group"}},
@@ -319,7 +322,8 @@ title=abc)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{.projects = {data::tproject{42, "test project"}},
                            .groups = {data::tgroup{99, 42, "test group"}},
@@ -346,7 +350,8 @@ title=abc)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{.projects = {data::tproject{42, "test project"}},
                            .groups = {data::tgroup{99, 42, "test group"}},
@@ -434,7 +439,8 @@ description=)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
   };
 
@@ -514,7 +520,8 @@ status=backlog)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
@@ -531,7 +538,8 @@ status=selected)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
@@ -548,7 +556,8 @@ status=progress)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
@@ -565,7 +574,8 @@ status=review)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
@@ -582,7 +592,8 @@ status=done)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
                                                  data::ttask::tstatus::done}}});
@@ -598,7 +609,8 @@ status=discarded)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.tasks = {data::ttask{1, 0, 0, "abc", "",
@@ -793,7 +805,8 @@ labels=)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
   };
 
@@ -819,7 +832,8 @@ labels=10,15,    20)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{
                   .labels = {data::tlabel{10, "abc"}, data::tlabel{15, "def"},
@@ -923,7 +937,8 @@ dependencies=)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
   };
 
@@ -941,7 +956,8 @@ dependencies=10,15,    20)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.tasks = {data::ttask{
@@ -1045,7 +1061,8 @@ requirements=)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
   };
 
@@ -1078,7 +1095,8 @@ requirements=10,15,    20)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(
         **result,
         data::tstate{.projects = {data::tproject{1, "project"}},
@@ -1185,7 +1203,8 @@ title=abc)";
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result, data::tstate{.tasks = {data::ttask{1, 0, 0, "abc"}}});
   };
 
@@ -1241,7 +1260,8 @@ requirements=10,20,15
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{
                   .labels =
@@ -1318,7 +1338,8 @@ requirements=10,20,15
     std::expected<std::unique_ptr<data::tstate>, data::tparse_error> result =
         data::parse(input);
 
-    assert_true(result) << [&] { return format(result.error()); };
+    expect_true(result) << [&] { return format(result.error()); }
+                        << boost::ut::fatal;
     expect_eq(**result,
               data::tstate{
                   .labels =
